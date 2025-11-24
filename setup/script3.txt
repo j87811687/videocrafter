@@ -279,7 +279,15 @@ if [ ! -d "VideoCrafter" ]; then
 		for i in $(seq 1 $HASH_ATTEMPTS); do
             echo "Hash attempt $i/$HASH_ATTEMPTS..."
 
-            TREE_HASH=$(find . -type f -not -path './.git/*' -print0 \
+			TREE_HASH=$(find . -type f \
+			    -not -path './.git/*' \
+			    -not -name '.DS_Store' \
+			    -not -name 'Thumbs.db' \
+			    -not -name '*.swp' \
+			    -not -name '*.tmp' \
+			    -not -name '*~' \
+			    -not -name 'desktop.ini' \
+			    -print0 \
                 | sort -z \
                 | xargs -0 sha256sum 2>/dev/null \
                 | sha256sum 2>/dev/null \
