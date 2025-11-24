@@ -156,28 +156,28 @@ fi
 FREEZE_OUTPUT="/root/requirements_inference_derived.txt"
 
 if [ ! -f "$FREEZE_OUTPUT" ]; then
-echo "=== Checking PyTorch CUDA build==="
+	echo "=== Checking PyTorch CUDA build==="
 
-# If torch is not installed, install
-if ! python -c "import torch" &>/dev/null; then
-    echo "🔥 PyTorch not found — installing build ($PYTORCH_CUDA)..."
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/${PYTORCH_CUDA}
-else
-    # Torch exists → check build
-    INSTALLED_TORCH_CUDA=$(python -c "import torch; print(torch.version.cuda)")
-    REQUIRED_TORCH_CUDA="${CUDA_VERSION}"
+	# If torch is not installed, install
+	if ! python -c "import torch" &>/dev/null; then
+  		echo "🔥 PyTorch not found — installing build ($PYTORCH_CUDA)..."
+    	pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/${PYTORCH_CUDA}
+	else
+    	# Torch exists → check build
+    	INSTALLED_TORCH_CUDA=$(python -c "import torch; print(torch.version.cuda)")
+    	REQUIRED_TORCH_CUDA="${CUDA_VERSION}"
 
-    echo "🔍 Installed PyTorch CUDA: ${INSTALLED_TORCH_CUDA}"
-    echo "🔍 Required PyTorch CUDA: ${REQUIRED_TORCH_CUDA}"
+    	echo "🔍 Installed PyTorch CUDA: ${INSTALLED_TORCH_CUDA}"
+    	echo "🔍 Required PyTorch CUDA: ${REQUIRED_TORCH_CUDA}"
 
-    if [ "$INSTALLED_TORCH_CUDA" != "$REQUIRED_TORCH_CUDA" ]; then
-        echo "⚠️ PyTorch CUDA mismatch — reinstalling correct build..."
-        pip install --force-reinstall torch torchvision torchaudio \
-            --index-url https://download.pytorch.org/whl/${PYTORCH_CUDA}
-    else
-        echo "✅ PyTorch CUDA build matches requirement."
-    fi
-fi
+    	if [ "$INSTALLED_TORCH_CUDA" != "$REQUIRED_TORCH_CUDA" ]; then
+        	echo "⚠️ PyTorch CUDA mismatch — reinstalling correct build..."
+        	pip install --force-reinstall torch torchvision torchaudio \
+           		--index-url https://download.pytorch.org/whl/${PYTORCH_CUDA}
+    	else
+        	echo "✅ PyTorch CUDA build matches requirement."
+    	fi
+	fi
 else
     echo "🔁 PyTorch install skipped (freeze file detected)"
 fi
