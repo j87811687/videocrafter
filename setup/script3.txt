@@ -112,6 +112,8 @@ conda activate videocrafter
 echo "🔍 Checking existing GPU and software environment..."
 if command -v nvidia-smi &> /dev/null; then
     COMPUTE_CAP=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n 1)
+	COMPUTE_CAP=$(echo "$COMPUTE_CAP" | sed -E 's/[^0-9\.]//g')
+	[ -z "$COMPUTE_CAP" ] && COMPUTE_CAP="0.0"
     echo "🧠 Detected GPU's Compute Capability: $COMPUTE_CAP"
 else
     fail "No NVIDIA GPU detected!"
