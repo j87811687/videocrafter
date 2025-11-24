@@ -170,13 +170,24 @@ if [ ! -f "$FREEZE_OUTPUT" ]; then
     	echo "🔍 Installed PyTorch CUDA: ${INSTALLED_TORCH_CUDA}"
     	echo "🔍 Required PyTorch CUDA: ${REQUIRED_TORCH_CUDA}"
 
-    	if [ "$INSTALLED_TORCH_CUDA" != "$REQUIRED_TORCH_CUDA" ]; then
-        	echo "⚠️ PyTorch CUDA mismatch — reinstalling correct build..."
-        	pip install --force-reinstall torch torchvision torchaudio \
-           		--index-url https://download.pytorch.org/whl/${PYTORCH_CUDA}
-    	else
-        	echo "✅ PyTorch CUDA build matches requirement."
-    	fi
+		# Normalize CUDA versions to major.minor (handles 12.1 vs 12.1.0 vs 121)
+		normalize_cuda_ver() {
+		    echo "$1" | sed -E 's/[^0-9.]//g' | awk -F. '{print $1"."$2}'
+		}
+		
+		NORM_INSTALLED=$(normalize_cuda_ver "$INSTALLED_TORCH_CUDA")
+		NORM_REQUIRED=$(normalize_cuda_ver "$REQUIRED_TORCH_CUDA")
+		
+		echo "🔍 Normalized PyTorch CUDA: ${NORM_INSTALLED}"
+		echo "🔍 Normalized Required CUDA: ${NORM_REQUIRED}"
+		
+		if [ "$NORM_INSTALLED" != "$NORM_REQUIRED" ]; then
+		    echo "⚠️ PyTorch CUDA mismatch — reinstalling correct build..."
+		    pip install --force-reinstall torch torchvision torchaudio \
+		        --index-url https://download.pytorch.org/whl/${PYTORCH_CUDA}
+		else
+		    echo "✅ PyTorch CUDA build matches requirement."
+		fi
 	fi
 else
     echo "🔁 PyTorch install skipped (freeze file detected)"
