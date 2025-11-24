@@ -198,27 +198,27 @@ fi
 
 # -------------------- VideoCrafter Setup --------------------
 if [ ! -d "VideoCrafter" ]; then
-echo "=== 📁 Cloning VideoCrafter (commit dab0535) with strict verification ==="
+	echo "=== 📁 Cloning VideoCrafter (commit dab0535) with strict verification ==="
 
-REPO_URL="https://github.com/AILab-CVC/VideoCrafter.git"
-PINNED_COMMIT="dab0535"
-EXPECTED_REPO_TREE_HASH="e6c19bed66c95d060c70432ae3191a8a7e327ba7f0fe61557b34ab4b281a5b76"
-MAX_CLONE_ATTEMPTS=5
+	REPO_URL="https://github.com/AILab-CVC/VideoCrafter.git"
+	PINNED_COMMIT="dab0535"
+	EXPECTED_REPO_TREE_HASH="e6c19bed66c95d060c70432ae3191a8a7e327ba7f0fe61557b34ab4b281a5b76"
+	MAX_CLONE_ATTEMPTS=5
+	
+	attempt=1
+	success=0
 
-attempt=1
-success=0
-
-while [ $attempt -le $MAX_CLONE_ATTEMPTS ]; do
-        echo "=== Clone attempt $attempt/$MAX_CLONE_ATTEMPTS ==="
-        rm -rf VideoCrafter
-
-# Clone repo directly at commit (detached HEAD)
-        git clone --branch "$PINNED_COMMIT" "$REPO_URL"
-        if [ $? -ne 0 ]; then
-            echo "⚠️ Git clone failed — retrying..."
-            attempt=$((attempt+1))
-            continue
-        fi
+	while [ $attempt -le $MAX_CLONE_ATTEMPTS ]; do
+		echo "=== Clone attempt $attempt/$MAX_CLONE_ATTEMPTS ==="
+		rm -rf VideoCrafter
+	
+		# Clone repo directly at commit (detached HEAD)
+	    git clone --branch "$PINNED_COMMIT" "$REPO_URL"
+	        if [ $? -ne 0 ]; then
+	            echo "⚠️ Git clone failed — retrying..."
+	            attempt=$((attempt+1))
+	            continue
+	        fi
 
 cd VideoCrafter || {
             echo "❌ VideoCrafter directory missing after clone."
