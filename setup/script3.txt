@@ -312,42 +312,44 @@ fi
 cd VideoCrafter
 
 # -------------------- Inference Freeze (create or install) --------------------
-WHITELIST_PATH="/root/inference_whitelist.txt"
-
-if [ -f "$FREEZE_OUTPUT" ]; then
-    echo "📦 Installing inference environment from existing freeze: $FREEZE_OUTPUT"
-    pip install -r "$FREEZE_OUTPUT" --no-deps
-    echo "✅ Inference environment restored from freeze."
-else
-    echo "📦 Freeze not found — installing VideoCrafter Python requirements before creating freeze..."
-
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    pip install huggingface_hub
-
-    if [ ! -f "$WHITELIST_PATH" ]; then
-
-		WHITELIST_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/inference_whitelist.txt"
-		for attempt in 1 2 3; do
-    		echo "⬇️ Downloading inference whitelist (attempt $attempt)..."
-    		curl -fsSL "$WHITELIST_URL" -o "$WHITELIST_PATH" && break
-    		sleep 2
-		done
-		if [ ! -f "$WHITELIST_PATH" ]; then
-    		echo "❌ Failed to download inference whitelist after 3 attempts."
-    		echo "Cannot create inference-only freeze."
-    		return 0 2>/dev/null || true
-		else
-    		echo "✅ Inference whitelist downloaded: $WHITELIST_PATH"
-		fi
-	fi
-
-	echo "📦 Creating inference-only freeze from current environment..."
-	pip freeze > /tmp/full_freeze.txt
-	grep -i -f "$WHITELIST_PATH" /tmp/full_freeze.txt > "$FREEZE_OUTPUT"
+create_freeze() {
+	WHITELIST_PATH="/root/inference_whitelist.txt"
+	if [ -f "$FREEZE_OUTPUT" ]; then
+	    echo "📦 Installing inference environment from existing freeze: $FREEZE_OUTPUT"
+	    pip install -r "$FREEZE_OUTPUT" --no-deps
+	    echo "✅ Inference environment restored from freeze."
+	else
+	    echo "📦 Freeze not found — installing VideoCrafter Python requirements before creating freeze..."
 	
-	echo "✅ Created new inference freeze at: $FREEZE_OUTPUT"
-fi
+	    pip install --upgrade pip
+	    pip install -r requirements.txt
+	    pip install huggingface_hub
+	
+	    if [ ! -f "$WHITELIST_PATH" ]; then
+	
+			WHITELIST_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/inference_whitelist.txt"
+			for attempt in 1 2 3; do
+	    		echo "⬇️ Downloading inference whitelist (attempt $attempt)..."
+	    		curl -fsSL "$WHITELIST_URL" -o "$WHITELIST_PATH" && break
+	    		sleep 2
+			done
+			if [ ! -f "$WHITELIST_PATH" ]; then
+	    		echo "❌ Failed to download inference whitelist after 3 attempts."
+	    		echo "Cannot create inference-only freeze."
+                return 0
+			else
+	    		echo "✅ Inference whitelist downloaded: $WHITELIST_PATH"
+			fi
+		fi
+	
+		echo "📦 Creating inference-only freeze from current environment..."
+		pip freeze > /tmp/full_freeze.txt
+		grep -i -f "$WHITELIST_PATH" /tmp/full_freeze.txt > "$FREEZE_OUTPUT"
+		
+		echo "✅ Created new inference freeze at: $FREEZE_OUTPUT"
+	fi
+}
+create_freeze
 
 # -------------------- Configure Hugging Face --------------------
 mkdir -p ~/.huggingface
