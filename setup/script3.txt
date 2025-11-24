@@ -13,7 +13,7 @@ set -e
 # =====================================================
 # -------------------- Disk Space Check --------------------
 MIN_FREE_GB=10
-FREE_GB=$(df -BG / | tail -1 | awk '{print $4}' | sed 's/G//')
+FREE_GB=$(df -BG / | awk 'END { gsub(/[^0-9]/, "", $4); print $4 }')
 
 if [ "$FREE_GB" -lt "$MIN_FREE_GB" ]; then
     echo "❌ Error: Only ${FREE_GB}GB free — need at least ${MIN_FREE_GB}GB."
