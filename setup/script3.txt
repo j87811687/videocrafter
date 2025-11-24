@@ -23,13 +23,6 @@ else
     echo "💽 Disk check OK — ${FREE_GB}GB free."
 fi
 
-# -------------------- Logging --------------------
-LOG_DIR="$HOME/logs"
-mkdir -p "$LOG_DIR"
-LOG_FILE="$LOG_DIR/setup_$(date +%Y-%m-%d_%H-%M-%S).log"
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-echo "🗓️ Log file: $LOG_FILE"
 echo "------------------------------------------------------------"
 echo "🚀 Starting secure VideoCrafter setup..."
 echo "------------------------------------------------------------"
@@ -54,6 +47,13 @@ if [ -z "${HF_TOKEN}" ]; then
 fi
 
 echo "✅ Using Hugging Face token from environment variable."
+
+# -------------------- Logging --------------------
+LOG_DIR="$HOME/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/setup_$(date +%Y-%m-%d_%H-%M-%S).log"
+
+echo "🗓️ Log file: $LOG_FILE"
 
 # -------------------- Token Redaction Mask --------------------
 MASK_TOKEN() {
