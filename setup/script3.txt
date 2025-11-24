@@ -214,16 +214,16 @@ if [ ! -d "VideoCrafter" ]; then
 	
 		# Clone repo directly at commit (detached HEAD)
 	    git clone --branch "$PINNED_COMMIT" "$REPO_URL"
-	        if [ $? -ne 0 ]; then
-	            echo "⚠️ Git clone failed — retrying..."
-	            attempt=$((attempt+1))
-	            continue
-	        fi
+	    if [ $? -ne 0 ]; then
+	    	echo "⚠️ Git clone failed — retrying..."
+			attempt=$((attempt+1))
+			continue
+	    fi
 
-cd VideoCrafter || {
+		cd VideoCrafter || {
             echo "❌ VideoCrafter directory missing after clone."
             attempt=$((attempt+1)); continue
-}
+		}
 
         # -----------------------------
         # 1. STRICT SHALLOW CHECK
@@ -262,10 +262,10 @@ cd VideoCrafter || {
         # -----------------------------
         echo "=== Verifying repository tree-hash ==="
 
-HASH_ATTEMPTS=5
-backoff=1
+		HASH_ATTEMPTS=5
+		backoff=1
 
-for i in $(seq 1 $HASH_ATTEMPTS); do
+		for i in $(seq 1 $HASH_ATTEMPTS); do
             echo "Hash attempt $i/$HASH_ATTEMPTS..."
 
             TREE_HASH=$(find . -type f -not -path './.git/*' -print0 \
@@ -281,7 +281,7 @@ for i in $(seq 1 $HASH_ATTEMPTS); do
                 backoff=$((backoff * 2))
                 continue
             fi
-done
+		done
 
         if [ "$TREE_HASH" != "$EXPECTED_REPO_TREE_HASH" ]; then
             echo "❌ Repository checksum mismatch!"
@@ -296,14 +296,14 @@ done
         echo "✅ Repository integrity verified."
         success=1
         break
-done
+	done
 
-if [ $success -ne 1 ]; then
+	if [ $success -ne 1 ]; then
         echo "❌ Failed to obtain a complete, verified clone after $MAX_CLONE_ATTEMPTS attempts."
         exit 1
-fi
+	fi
 
-echo "✅ VideoCrafter successfully cloned and verified at commit $PINNED_COMMIT."
+	echo "✅ VideoCrafter successfully cloned and verified at commit $PINNED_COMMIT."
 
 else
     echo "✅ VideoCrafter repo already present."
@@ -327,26 +327,26 @@ else
 
     if [ ! -f "$WHITELIST_PATH" ]; then
 
-WHITELIST_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/inference_whitelist.txt"
-for attempt in 1 2 3; do
-    echo "⬇️ Downloading inference whitelist (attempt $attempt)..."
-    curl -fsSL "$WHITELIST_URL" -o "$WHITELIST_PATH" && break
-    sleep 2
-done
-if [ ! -f "$WHITELIST_PATH" ]; then
-    echo "❌ Failed to download inference whitelist after 3 attempts."
-    echo "Cannot create inference-only freeze."
-    return 0 2>/dev/null || true
-else
-    echo "✅ Inference whitelist downloaded: $WHITELIST_PATH"
-fi
-fi
+		WHITELIST_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/inference_whitelist.txt"
+		for attempt in 1 2 3; do
+    		echo "⬇️ Downloading inference whitelist (attempt $attempt)..."
+    		curl -fsSL "$WHITELIST_URL" -o "$WHITELIST_PATH" && break
+    		sleep 2
+		done
+		if [ ! -f "$WHITELIST_PATH" ]; then
+    		echo "❌ Failed to download inference whitelist after 3 attempts."
+    		echo "Cannot create inference-only freeze."
+    		return 0 2>/dev/null || true
+		else
+    		echo "✅ Inference whitelist downloaded: $WHITELIST_PATH"
+		fi
+	fi
 
-echo "📦 Creating inference-only freeze from current environment..."
-pip freeze > /tmp/full_freeze.txt
-grep -i -f "$WHITELIST_PATH" /tmp/full_freeze.txt > "$FREEZE_OUTPUT"
-
-echo "✅ Created new inference freeze at: $FREEZE_OUTPUT"
+	echo "📦 Creating inference-only freeze from current environment..."
+	pip freeze > /tmp/full_freeze.txt
+	grep -i -f "$WHITELIST_PATH" /tmp/full_freeze.txt > "$FREEZE_OUTPUT"
+	
+	echo "✅ Created new inference freeze at: $FREEZE_OUTPUT"
 fi
 
 # -------------------- Configure Hugging Face --------------------
@@ -511,40 +511,40 @@ fi
 
 # -------------------- Port Mapping Test --------------------
 if [ "${TEST_PORT_MAPPING_DONE:-false}" != "true" ]; then
-echo "🧪 Running first-time port mapping test..."
-while true; do
-    read -p "Enter a port number to test: " TEST_PORT
-    if [[ "$TEST_PORT" =~ ^[0-9]+$ ]] && [ "$TEST_PORT" -ge 1 ] && [ "$TEST_PORT" -le 65535 ]; then
-        break
-    else
-        read -p "❌ Invalid port number. Try again? [y/n]: " RETRY
-        if [[ ! "$RETRY" =~ ^[Yy]$ ]]; then
-            echo "🚫 Port mapping test aborted by user."
-            exit 0
-        fi
-    fi
-done
+	echo "🧪 Running first-time port mapping test..."
+	while true; do
+    	read -p "Enter a port number to test: " TEST_PORT
+	    if [[ "$TEST_PORT" =~ ^[0-9]+$ ]] && [ "$TEST_PORT" -ge 1 ] && [ "$TEST_PORT" -le 65535 ]; then
+	        break
+	    else
+	        read -p "❌ Invalid port number. Try again? [y/n]: " RETRY
+	        if [[ ! "$RETRY" =~ ^[Yy]$ ]]; then
+	            echo "🚫 Port mapping test aborted by user."
+	            exit 0
+	        fi
+	    fi
+	done
 
-echo "🌐 Starting temporary web server on port $TEST_PORT to verify mapping..."
+	echo "🌐 Starting temporary web server on port $TEST_PORT to verify mapping..."
+	
+	mkdir -p /workspace && cd /workspace
+	python3 -m http.server $TEST_PORT >/tmp/webserver_test.log 2>&1 &
+	SERVER_PID=$!
+	trap "kill $SERVER_PID >/dev/null 2>&1" EXIT
+	sleep 5
 
-mkdir -p /workspace && cd /workspace
-python3 -m http.server $TEST_PORT >/tmp/webserver_test.log 2>&1 &
-SERVER_PID=$!
-trap "kill $SERVER_PID >/dev/null 2>&1" EXIT
-sleep 5
-
-if curl -s "http://localhost:$TEST_PORT" >/dev/null; then
-          echo "✅ Internal check: port $TEST_PORT is responding."
-else
-          echo "❌ Internal check failed — port $TEST_PORT not responding."
-fi
-
-echo "🌍 You can now verify from your local machine: http://<INSTANCE_IP>:<EXTERNAL_PORT>"
-echo "⏳ The test server will stop automatically in 60 seconds..."
-sleep 60
-kill $SERVER_PID >/dev/null 2>&1
-echo "🛑 Test web server stopped."
-echo "TEST_PORT_MAPPING_DONE=true" >> ~/.bashrc
+	if curl -s "http://localhost:$TEST_PORT" >/dev/null; then
+		echo "✅ Internal check: port $TEST_PORT is responding."
+	else
+		echo "❌ Internal check failed — port $TEST_PORT not responding."
+	fi
+	
+	echo "🌍 You can now verify from your local machine: http://<INSTANCE_IP>:<EXTERNAL_PORT>"
+	echo "⏳ The test server will stop automatically in 60 seconds..."
+	sleep 60
+	kill $SERVER_PID >/dev/null 2>&1
+	echo "🛑 Test web server stopped."
+	echo "TEST_PORT_MAPPING_DONE=true" >> ~/.bashrc
 fi
 
 echo ""
