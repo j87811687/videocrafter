@@ -210,6 +210,10 @@ else
 fi
 
 # -------------------- VideoCrafter Setup --------------------
+STATE_FILE="/root/.videocrafter_state"
+[ -f "$STATE_FILE" ] && source "$STATE_FILE"
+
+[ -d "VideoCrafter/.git" ] || rm -rf VideoCrafter 2>/dev/null
 if [ ! -d "VideoCrafter" ]; then
 	echo "=== 📁 Cloning VideoCrafter (commit dab0535) with strict verification ==="
 
@@ -219,7 +223,7 @@ if [ ! -d "VideoCrafter" ]; then
 	MAX_CLONE_ATTEMPTS=5
 	
 	attempt=1
-	success=0
+	clone_successful=0
 
 	while [ $attempt -le $MAX_CLONE_ATTEMPTS ]; do
 		echo "=== Clone attempt $attempt/$MAX_CLONE_ATTEMPTS ==="
@@ -315,13 +319,15 @@ if [ ! -d "VideoCrafter" ]; then
         fi
 
         echo "✅ Repository integrity verified."
-        success=1
+        clone_successful=1
+		echo "clone_successful=1" > "$STATE_FILE"
         break
 	done
 
-	if [ $success -ne 1 ]; then
+	if [ $clone_successful -ne 1 ]; then
         echo "❌ Failed to obtain a complete, verified clone after $MAX_CLONE_ATTEMPTS attempts."
-        exit 1
+		rm -rf VideoCrafter
+		exit 1
 	fi
 
 	echo "✅ VideoCrafter successfully cloned and verified at commit $PINNED_COMMIT."
@@ -567,7 +573,7 @@ if [ "${TEST_PORT_MAPPING_DONE:-false}" != "true" ]; then
 	sleep 60
 	kill $SERVER_PID >/dev/null 2>&1
 	echo "🛑 Test web server stopped."
-	echo "TEST_PORT_MAPPING_DONE=true" >> ~/.bashrc
+	echo "TEST_PORT_MAPPING_DONE=true" > "$STATE_FILE"
 fi
 
 echo ""
