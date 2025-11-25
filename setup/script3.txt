@@ -213,7 +213,7 @@ fi
 STATE_FILE="/root/.videocrafter_state"
 [ -f "$STATE_FILE" ] && source "$STATE_FILE"
 
-[ -d "VideoCrafter/.git" ] || rm -rf VideoCrafter 2>/dev/null
+([ ! -d "VideoCrafter/.git" ] || [ "${clone_successful:-0}" -eq 0 ]) && rm -rf VideoCrafter 2>/dev/null
 if [ ! -d "VideoCrafter" ]; then
 	echo "=== 📁 Cloning VideoCrafter (commit dab0535) with strict verification ==="
 
