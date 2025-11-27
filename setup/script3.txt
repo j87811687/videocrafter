@@ -427,59 +427,59 @@ load_pointer_metadata() {
 
 # Helper: delete LFS cache object for a given file (if we have its OID)
 delete_lfs_cache_object() {
-    local rel_path="$1"
-    local oid="${EXPECTED_OID[$rel_path]}"
+	local rel_path="$1"
+	local oid="${EXPECTED_OID[$rel_path]}"
 
-    [ -n "$oid" ] || return 0
+	[ -n "$oid" ] || return 0
 
-    # OID is pure hex; first 2 + next 2 form subdirs
-    local short1 short2 obj_path
-    short1="${oid:0:2}"
-    short2="${oid:2:2}"
-    obj_path="$REPO_DIR/.git/lfs/objects/$short1/$short2/$oid"
+	# OID is pure hex; first 2 + next 2 form subdirs
+	local short1 short2 obj_path
+	short1="${oid:0:2}"
+	short2="${oid:2:2}"
+	obj_path="$REPO_DIR/.git/lfs/objects/$short1/$short2/$oid"
 
-    rm -f "$obj_path" 2>/dev/null || true
+	rm -f "$obj_path" 2>/dev/null || true
 }
 
 # Check all REQUIRED_FILES:
 #  - if missing → add to missing_list
 #  - if exists and we have EXPECTED_SIZE → compare; on mismatch delete file + LFS cache and add to missing_list
 find_missing_weights() {
-    missing_list=()
+	missing_list=()
 
-    for f in "${REQUIRED_FILES[@]}"; do
-        local full_path="$REPO_DIR/$f"
+	for f in "${REQUIRED_FILES[@]}"; do
+		local full_path="$REPO_DIR/$f"
 
-        if [ ! -f "$full_path" ]; then
-            # Completely missing file
-            missing_list+=("$f")
-            continue
-        fi
+		if [ ! -f "$full_path" ]; then
+			# Completely missing file
+			missing_list+=("$f")
+			continue
+		fi
 
-        # Only enforce size check for LFS-tracked weights where we know EXPECTED_SIZE
-        local expected_size="${EXPECTED_SIZE[$f]}"
-        if [ -n "$expected_size" ]; then
-            # Actual file size (Linux stat)
-            local actual_size
-            actual_size=$(stat -c%s "$full_path" 2>/dev/null || echo "")
+		# Only enforce size check for LFS-tracked weights where we know EXPECTED_SIZE
+		local expected_size="${EXPECTED_SIZE[$f]}"
+		if [ -n "$expected_size" ]; then
+			# Actual file size (Linux stat)
+			local actual_size
+			actual_size=$(stat -c%s "$full_path" 2>/dev/null || echo "")
 
-            if [ -z "$actual_size" ] || [ "$actual_size" != "$expected_size" ]; then
-                echo "⚠️ Size mismatch for $f (expected: ${expected_size} bytes, got: ${actual_size:-unknown})."
-                echo "   Treating as corrupted LFS object — removing file and cache entry."
+			if [ -z "$actual_size" ] || [ "$actual_size" != "$expected_size" ]; then
+				echo "⚠️ Size mismatch for $f (expected: ${expected_size} bytes, got: ${actual_size:-unknown})."
+				echo "   Treating as corrupted LFS object — removing file and cache entry."
 
-                # Delete working-tree file
-                rm -f "$full_path" 2>/dev/null || true
+				# Delete working-tree file
+				rm -f "$full_path" 2>/dev/null || true
 
-                # Delete LFS cache object (if we have its OID)
-                delete_lfs_cache_object "$f"
+				# Delete LFS cache object (if we have its OID)
+				delete_lfs_cache_object "$f"
 
-                # Mark as missing so it will be re-downloaded
-                missing_list+=("$f")
-                continue
-            fi
-        fi
-        # For non-LFS configs (no EXPECTED_SIZE), existence is enough.
-    done
+				# Mark as missing so it will be re-downloaded
+				missing_list+=("$f")
+				continue
+			fi
+		fi
+		# For non-LFS configs (no EXPECTED_SIZE), existence is enough.
+	done
 }
 
 git lfs install
