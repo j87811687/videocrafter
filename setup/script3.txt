@@ -486,10 +486,15 @@ git lfs install
 
 MAX_WEIGHT_RUNS=2
 weights_ok=0
-
 run=1
+
 while [ $run -le $MAX_WEIGHT_RUNS ]; do
 	echo "=== VideoCrafter weights sync run $run/$MAX_WEIGHT_RUNS ==="
+
+	MAX_REPO_RUNS=3
+	repo_run=1
+
+	while [ $repo_run -le $MAX_REPO_RUNS ]; do
 
 	# If repo missing or invalid, start from a clean slate
 	if [ ! -d "$REPO_DIR/.git" ]; then
@@ -504,11 +509,11 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 
 		if [ ! -d "$REPO_DIR/.git" ]; then
 			echo "❌ Failed to clone VideoCrafter weights repo after 3 attempts."
-			if [ $run -eq $MAX_WEIGHT_RUNS ]; then
+			if [ $repo_run -eq $MAX_REPO_RUNS ]; then
 				echo "❌ Setup aborted — VideoCrafter is NOT operational."
 				exit 1
 			fi
-			run=$((run+1))
+			repo_run=$((repo_run+1))
 			continue
 		fi
 
@@ -517,6 +522,8 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		EXPECTED_OID=()
 		load_pointer_metadata
 	fi
+
+	done
 
 	# 1) Full LFS pull for this repo
 	cd "$REPO_DIR"
