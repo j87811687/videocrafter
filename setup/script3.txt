@@ -489,87 +489,87 @@ weights_ok=0
 
 run=1
 while [ $run -le $MAX_WEIGHT_RUNS ]; do
-    echo "=== VideoCrafter weights sync run $run/$MAX_WEIGHT_RUNS ==="
+	echo "=== VideoCrafter weights sync run $run/$MAX_WEIGHT_RUNS ==="
 
-    # If repo missing or invalid, start from a clean slate
-    if [ ! -d "$REPO_DIR/.git" ]; then
-        rm -rf "$REPO_DIR" 2>/dev/null || true
-        echo "⬇️ Cloning VideoCrafter repository (weights repo)..."
+	# If repo missing or invalid, start from a clean slate
+	if [ ! -d "$REPO_DIR/.git" ]; then
+		rm -rf "$REPO_DIR" 2>/dev/null || true
+		echo "⬇️ Cloning VideoCrafter repository (weights repo)..."
 
-        for attempt in 1 2 3; do
-            echo "🔁 git clone attempt $attempt..."
-            GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
-            sleep 3
-        done
+		for attempt in 1 2 3; do
+			echo "🔁 git clone attempt $attempt..."
+			GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
+			sleep 3
+		done
 
-        if [ ! -d "$REPO_DIR/.git" ]; then
-            echo "❌ Failed to clone VideoCrafter weights repo after 3 attempts."
-            if [ $run -eq $MAX_WEIGHT_RUNS ]; then
-                echo "❌ Setup aborted — VideoCrafter is NOT operational."
-                exit 1
-            fi
-            run=$((run+1))
-            continue
-        fi
+		if [ ! -d "$REPO_DIR/.git" ]; then
+			echo "❌ Failed to clone VideoCrafter weights repo after 3 attempts."
+			if [ $run -eq $MAX_WEIGHT_RUNS ]; then
+				echo "❌ Setup aborted — VideoCrafter is NOT operational."
+				exit 1
+			fi
+			run=$((run+1))
+			continue
+		fi
 
-        # After successful clone and BEFORE the first git lfs pull, extract pointer sizes once
-        EXPECTED_SIZE=()
-        EXPECTED_OID=()
-        load_pointer_metadata
-    fi
+		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes once
+		EXPECTED_SIZE=()
+		EXPECTED_OID=()
+		load_pointer_metadata
+	fi
 
-    # 1) Full LFS pull for this repo
-    cd "$REPO_DIR"
-    for attempt in 1 2 3; do
-        echo "🔁 git lfs pull attempt $attempt..."
-        git lfs pull && break
-        sleep 3
-    done
-    cd ..
+	# 1) Full LFS pull for this repo
+	cd "$REPO_DIR"
+	for attempt in 1 2 3; do
+		echo "🔁 git lfs pull attempt $attempt..."
+		git lfs pull && break
+		sleep 3
+	done
+	cd ..
 
-    # 2) First check
-    find_missing_weights
-    if [ ${#missing_list[@]} -eq 0 ]; then
-        echo "✅ All VideoCrafter weight files successfully verified."
-        weights_ok=1
-        break  # Exit the outer run loop
-    fi
+	# 2) First check
+	find_missing_weights
+	if [ ${#missing_list[@]} -eq 0 ]; then
+		echo "✅ All VideoCrafter weight files successfully verified."
+		weights_ok=1
+		break  # Exit the outer run loop
+	fi
 
-    echo "⚠️ Missing or corrupted LFS files detected:"
-    printf ' - %s\n' "${missing_list[@]}"
+	echo "⚠️ Missing or corrupted LFS files detected:"
+	printf ' - %s\n' "${missing_list[@]}"
 
-    # 3) Force re-download of missing/corrupted files
-    cd "$REPO_DIR"
-    for f in "${missing_list[@]}"; do
-        echo "🔁 Forcing re-download of LFS file: $f"
-        git lfs pull --include="$f"
-    done
-    cd ..
+	# 3) Force re-download of missing/corrupted files
+	cd "$REPO_DIR"
+	for f in "${missing_list[@]}"; do
+		echo "🔁 Forcing re-download of LFS file: $f"
+		git lfs pull --include="$f"
+	done
+	cd ..
 
-    # 4) Second check in this run
-    find_missing_weights
-    if [ ${#missing_list[@]} -eq 0 ]; then
-        echo "✅ All VideoCrafter weight files successfully verified after targeted re-download."
-        weights_ok=1
-        break  # Exit the outer run loop
-    fi
+	# 4) Second check in this run
+	find_missing_weights
+	if [ ${#missing_list[@]} -eq 0 ]; then
+		echo "✅ All VideoCrafter weight files successfully verified after targeted re-download."
+		weights_ok=1
+		break  # Exit the outer run loop
+	fi
 
-    echo "⚠️ Missing files persist after targeted re-download in run $run."
-    echo "   Removing weights repo and preparing for a fresh attempt..."
+	echo "⚠️ Missing files persist after targeted re-download in run $run."
+	echo "   Removing weights repo and preparing for a fresh attempt..."
 
-    # Delete entire repo so next run re-clones fresh
-    rm -rf "$REPO_DIR" 2>/dev/null || true
-    EXPECTED_SIZE=()
-    EXPECTED_OID=()
+	# Delete entire repo so next run re-clones fresh
+	rm -rf "$REPO_DIR" 2>/dev/null || true
+	EXPECTED_SIZE=()
+	EXPECTED_OID=()
 
-    run=$((run+1))
+	run=$((run+1))
 done
 
 if [ $weights_ok -ne 1 ]; then
-    echo "❌ Missing required VideoCrafter weight files even after full retry:"
-    printf ' - %s\n' "${missing_list[@]}"
-    echo "❌ Setup aborted — VideoCrafter is NOT operational."
-    exit 1
+	echo "❌ Missing required VideoCrafter weight files even after full retry:"
+	printf ' - %s\n' "${missing_list[@]}"
+	echo "❌ Setup aborted — VideoCrafter is NOT operational."
+	exit 1
 fi
 
 echo "✅ All VideoCrafter weight files successfully verified."
