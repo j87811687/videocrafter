@@ -406,7 +406,16 @@ load_pointer_metadata() {
 	# called only after a fresh clone and BEFORE the first git lfs pull.
 	for f in "${REQUIRED_FILES[@]}"; do
 		local ptr_path="$REPO_DIR/$f"
-		[ -f "$ptr_path" ] || continue
+
+		if [ ! -f "$ptr_path" ]; then
+			echo "❌ Failed to proper clone repo."
+			if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
+				echo "❌ Setup aborted — VideoCrafter is NOT operational."
+				exit 1
+			fi
+			clone_run=$((clone_run+1))
+			break
+		fi
 
 		# Only real LFS pointers will have these lines
 		local size_line oid_line size_val oid_val
@@ -517,12 +526,12 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 				clone_run=$((clone_run+1))
 				continue
 			fi
-
-			# After successful clone and BEFORE the first git lfs pull, extract pointer sizes once
-			EXPECTED_SIZE=()
-			EXPECTED_OID=()
-			load_pointer_metadata
 		fi
+		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes once
+		EXPECTED_SIZE=()
+		EXPECTED_OID=()
+		load_pointer_metadata
+		
 	done
 
 	# 1) Full LFS pull for this repo
