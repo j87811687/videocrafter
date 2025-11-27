@@ -1,0 +1,107 @@
+# -------------------- Download & Verify VideoCrafter Weights --------------------
+mkdir -p checkpoints
+cd checkpoints
+
+REPO_URL="https://huggingface.co/VideoCrafter/VideoCrafter"
+REPO_DIR="VideoCrafter"
+
+REQUIRED_FILES=(
+    "configs/inference/i2v_videocrafter.yaml"
+    "configs/inference/t2v_videocrafter.yaml"
+    "models/i2v/model.ckpt"
+    "models/t2v/model.ckpt"
+)
+
+find_missing_weights() {
+    missing_list=()
+    for f in "${REQUIRED_FILES[@]}"; do
+        if [ ! -f "$REPO_DIR/$f" ]; then
+            missing_list+=("$f")
+        fi
+    done
+}
+
+if [ ! -d "$REPO_DIR" ]; then
+    echo "⬇️ Cloning VideoCrafter repository (weights repo)..."
+    git lfs install
+
+    for attempt in 1 2 3; do
+        echo "🔁 git clone attempt $attempt..."
+        GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
+        sleep 3
+    done
+
+    if [ ! -d "$REPO_DIR" ]; then
+        echo "❌ Failed to clone VideoCrafter repo after 3 attempts."
+        echo "❌ Setup aborted — VideoCrafter is NOT operational."
+        exit 1
+    fi
+fi
+
+cd "$REPO_DIR"
+
+for attempt in 1 2 3; do
+    echo "🔁 Initial git lfs pull attempt $attempt..."
+    git lfs pull && break
+    sleep 3
+done
+
+cd ..
+
+find_missing_weights
+
+if [ ${#missing_list[@]} -gt 0 ]; then
+    echo "⚠️ Missing LFS files detected:"
+    printf ' - %s\n' "${missing_list[@]}"
+
+    cd "$REPO_DIR"
+    for f in "${missing_list[@]}"; do
+        for attempt in 1 2 3; do
+            echo "🔁 Retrying download of missing file: $f (attempt $attempt)..."
+            git lfs pull --include="$f" && break
+            sleep 2
+        done
+    done
+    cd ..
+
+    find_missing_weights
+fi
+
+if [ ${#missing_list[@]} -gt 0 ]; then
+    echo "⚠️ Missing files persist after targeted retry — performing full cleanup and re-download."
+
+    rm -rf "$REPO_DIR"
+    git lfs install
+
+    echo "🔄 Re-cloning full repo..."
+    for attempt in 1 2 3; do
+        echo "🔁 Re-clone attempt $attempt..."
+        GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
+        sleep 3
+    done
+
+    if [ ! -d "$REPO_DIR" ]; then
+        echo "❌ Failed to re-clone VideoCrafter repo."
+        echo "❌ Setup aborted — VideoCrafter is NOT operational."
+        exit 1
+    fi
+
+    cd "$REPO_DIR"
+    for attempt in 1 2 3; do
+        echo "🔁 Re-LFS pull attempt $attempt..."
+        git lfs pull && break
+        sleep 3
+    done
+    cd ..
+
+    find_missing_weights
+fi
+
+if [ ${#missing_list[@]} -gt 0 ]; then
+    echo "❌ Missing required VideoCrafter weight files even after full retry:"
+    printf ' - %s\n' "${missing_list[@]}"
+    echo "❌ Setup aborted — VideoCrafter is NOT operational."
+    exit 1
+fi
+
+echo "✅ All VideoCrafter weight files successfully verified."
