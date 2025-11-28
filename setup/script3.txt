@@ -397,7 +397,7 @@ REQUIRED_FILES=(
 	"models/t2v/model.ckpt"
 )
 
-# Expected sizes and OIDs derived once from pointer files (after clone, before first git lfs pull)
+# Expected sizes and OIDs derived from pointer files (after clone, before first git lfs pull)
 declare -A EXPECTED_SIZE
 declare -A EXPECTED_OID
 
@@ -527,7 +527,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 				continue
 			fi
 		fi
-		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes once
+		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes
 		EXPECTED_SIZE=()
 		EXPECTED_OID=()
 		load_pointer_metadata
