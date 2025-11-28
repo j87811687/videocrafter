@@ -465,7 +465,7 @@ find_missing_weights() {
 			continue
 		fi
 
-		# Only enforce size check for LFS-tracked weights where we know EXPECTED_SIZE
+		# Size check for LFS-tracked weights where we know EXPECTED_SIZE and actual size
 		local expected_size="${EXPECTED_SIZE[$f]}"
 		if [ -n "$expected_size" ]; then
 			# Actual file size (Linux stat)
