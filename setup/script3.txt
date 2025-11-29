@@ -389,16 +389,14 @@ cd checkpoints
 REPO_URL="https://huggingface.co/VideoCrafter/VideoCrafter"
 REPO_DIR="VideoCrafter"
 
-# Minimal VC1 inference subset (I2V + T2V)
-REQUIRED_WEIGHT_FILES=(
+# Minimal VC1 inference subset (I2V + T2V) - git files
+REQUIRED_GIT_FILES=(
 	"configs/inference/i2v_videocrafter.yaml"
 	"configs/inference/t2v_videocrafter.yaml"
-	"models/i2v/model.ckpt"
-	"models/t2v/model.ckpt"
 )
 
-# Only lfs tracked files, relevant for size comparison
-REQUIRED_LFS_TRACKED_WEIGHT_FILES=(
+#  Minimal VC1 inference subset (I2V + T2V) - lfs tracked files, relevant for size comparison
+REQUIRED_LFS_TRACKED_FILES=(
 	"models/i2v/model.ckpt"
 	"models/t2v/model.ckpt"
 )
@@ -410,7 +408,7 @@ declare -A EXPECTED_OID
 load_pointer_metadata() {
 	# Extract expected size + oid from working-tree pointer files ($REPO_DIR/$f),
 	# called only after a fresh clone and BEFORE the first git lfs pull.
-	for f in "${REQUIRED_LFS_TRACKED_WEIGHT_FILES[@]}"; do
+	for f in "${REQUIRED_LFS_TRACKED_FILES[@]}"; do
 		local pointer_path="$REPO_DIR/$f"
 
 		if [ ! -f "$pointer_path" ]; then
@@ -465,13 +463,13 @@ delete_lfs_cache_object() {
 	rm -f "$obj_path" 2>/dev/null || true
 }
 
-# Check all REQUIRED_WEIGHT_FILES:
+# Check all REQUIRED_LFS_TRACKED_FILES:
 #  - if missing → add to missing_list
 #  - if exists and we have EXPECTED_SIZE → compare; on mismatch delete file + LFS cache and add to missing_list
 find_missing_weights() {
 	missing_list=()
 
-	for f in "${REQUIRED_WEIGHT_FILES[@]}"; do
+	for f in "${REQUIRED_LFS_TRACKED_FILES[@]}"; do
 		local full_path="$REPO_DIR/$f"
 
 		if [ ! -f "$full_path" ]; then
@@ -542,6 +540,21 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 				continue
 			fi
 		fi
+
+		# Check for existence of git files
+		for f in "${REQUIRED_GIT_FILES[@]}"; do
+			if [ ! -f "$REPO_DIR/$f" ]; then
+				rm -rf "$REPO_DIR" 2>/dev/null || true
+				echo "❌ Failed to clone VideoCrafter weights repo after 3 attempts."
+				if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
+					echo "❌ Setup aborted — VideoCrafter is NOT operational."
+					exit 1
+				fi
+				clone_run=$((clone_run+1))
+				continue
+			fi
+		done
+
 		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes
 		EXPECTED_SIZE=()
 		EXPECTED_OID=()
