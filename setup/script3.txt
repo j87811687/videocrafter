@@ -411,10 +411,11 @@ load_pointer_metadata() {
 	# Extract expected size + oid from working-tree pointer files ($REPO_DIR/$f),
 	# called only after a fresh clone and BEFORE the first git lfs pull.
 	for f in "${REQUIRED_LFS_TRACKED_WEIGHT_FILES[@]}"; do
-		local ptr_path="$REPO_DIR/$f"
+		local pointer_path="$REPO_DIR/$f"
 
-		if [ ! -f "$ptr_path" ]; then
-			echo "❌ Failed to proper clone repo."
+		if [ ! -f "$pointer_path" ]; then
+			echo "❌ Failed to proper clone repo - missing pointer file."
+			rm -rf "$REPO_DIR" 2>/dev/null || true
 			if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
 				echo "❌ Setup aborted — VideoCrafter is NOT operational."
 				exit 1
@@ -423,16 +424,24 @@ load_pointer_metadata() {
 			break
 		fi
 
-		# Only real LFS pointers will have these lines
 		local size_line oid_line size_val oid_val
-		size_line=$(grep -E '^size ' "$ptr_path" 2>/dev/null || true)
-		oid_line=$(grep -E '^oid ' "$ptr_path" 2>/dev/null || true)
+		size_line=$(grep -E '^size ' "$pointer_path" 2>/dev/null || true)
+		oid_line=$(grep -E '^oid ' "$pointer_path" 2>/dev/null || true)
 
 		size_val=$(echo "$size_line" | awk '{print $2}')
 		oid_val=$(echo "$oid_line" | sed -E 's/^oid sha256://')
 
 		if [ -n "$size_val" ]; then
 			EXPECTED_SIZE["$f"]="$size_val"
+		else
+			echo "❌ Failed to proper clone repo - no size in pointer file."
+			rm -rf "$REPO_DIR" 2>/dev/null || true
+			if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
+				echo "❌ Setup aborted — VideoCrafter is NOT operational."
+				exit 1
+			fi
+			clone_run=$((clone_run+1))
+			break
 		fi
 		if [ -n "$oid_val" ]; then
 			EXPECTED_OID["$f"]="$oid_val"
