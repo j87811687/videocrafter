@@ -390,9 +390,15 @@ REPO_URL="https://huggingface.co/VideoCrafter/VideoCrafter"
 REPO_DIR="VideoCrafter"
 
 # Minimal VC1 inference subset (I2V + T2V)
-REQUIRED_FILES=(
+REQUIRED_WEIGHT_FILES=(
 	"configs/inference/i2v_videocrafter.yaml"
 	"configs/inference/t2v_videocrafter.yaml"
+	"models/i2v/model.ckpt"
+	"models/t2v/model.ckpt"
+)
+
+# Only lfs tracked files, relevant for size comparison
+REQUIRED_LFS_TRACKED_WEIGHT_FILES=(
 	"models/i2v/model.ckpt"
 	"models/t2v/model.ckpt"
 )
@@ -404,7 +410,7 @@ declare -A EXPECTED_OID
 load_pointer_metadata() {
 	# Extract expected size + oid from working-tree pointer files ($REPO_DIR/$f),
 	# called only after a fresh clone and BEFORE the first git lfs pull.
-	for f in "${REQUIRED_FILES[@]}"; do
+	for f in "${REQUIRED_LFS_TRACKED_WEIGHT_FILES[@]}"; do
 		local ptr_path="$REPO_DIR/$f"
 
 		if [ ! -f "$ptr_path" ]; then
@@ -450,13 +456,13 @@ delete_lfs_cache_object() {
 	rm -f "$obj_path" 2>/dev/null || true
 }
 
-# Check all REQUIRED_FILES:
+# Check all REQUIRED_WEIGHT_FILES:
 #  - if missing → add to missing_list
 #  - if exists and we have EXPECTED_SIZE → compare; on mismatch delete file + LFS cache and add to missing_list
 find_missing_weights() {
 	missing_list=()
 
-	for f in "${REQUIRED_FILES[@]}"; do
+	for f in "${REQUIRED_WEIGHT_FILES[@]}"; do
 		local full_path="$REPO_DIR/$f"
 
 		if [ ! -f "$full_path" ]; then
@@ -575,8 +581,6 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 
 	# Delete entire repo so next run re-clones fresh
 	rm -rf "$REPO_DIR" 2>/dev/null || true
-	EXPECTED_SIZE=()
-	EXPECTED_OID=()
 
 	run=$((run+1))
 done
