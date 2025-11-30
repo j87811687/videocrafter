@@ -447,25 +447,9 @@ load_pointer_metadata() {
 	done
 }
 
-# Helper: delete LFS cache object for a given file (if we have its OID)
-delete_lfs_cache_object() {
-	local rel_path="$1"
-	local oid="${EXPECTED_OID[$rel_path]}"
-
-	[ -n "$oid" ] || return 0
-
-	# OID is pure hex; first 2 + next 2 form subdirs
-	local short1 short2 obj_path
-	short1="${oid:0:2}"
-	short2="${oid:2:2}"
-	obj_path="$REPO_DIR/.git/lfs/objects/$short1/$short2/$oid"
-
-	rm -f "$obj_path" 2>/dev/null || true
-}
-
 # Check all REQUIRED_LFS_TRACKED_FILES:
 #  - if missing → add to missing_list
-#  - if exists and we have EXPECTED_SIZE → compare; on mismatch delete file + LFS cache and add to missing_list
+#  - if exists and (actual size is empty OR size mismatch) → delete file + LFS cache (if possible) and add to missing_list
 find_missing_weights() {
 	missing_list=()
 
@@ -478,30 +462,42 @@ find_missing_weights() {
 			continue
 		fi
 
-		# Size check for LFS-tracked weights where we know EXPECTED_SIZE and actual size
+		# Extract actual size and compare sizes
 		local expected_size="${EXPECTED_SIZE[$f]}"
-		if [ -n "$expected_size" ]; then
-			# Actual file size (Linux stat)
-			local actual_size
-			actual_size=$(stat -c%s "$full_path" 2>/dev/null || echo "")
+		
+		# Actual file size (Linux stat)
+		local actual_size
+		actual_size=$(stat -c%s "$full_path" 2>/dev/null || echo "")
 
-			if [ -z "$actual_size" ] || [ "$actual_size" != "$expected_size" ]; then
-				echo "⚠️ Size mismatch for $f (expected: ${expected_size} bytes, got: ${actual_size:-unknown})."
-				echo "   Treating as corrupted LFS object — removing file and cache entry."
+		if [ -z "$actual_size" ] || [ "$actual_size" != "$expected_size" ]; then
+			echo "⚠️ Size mismatch for $f (expected: ${expected_size} bytes, got: ${actual_size:-unknown})."
+			echo "   Treating as corrupted LFS object — removing file and cache entry."
 
-				# Delete working-tree file
-				rm -f "$full_path" 2>/dev/null || true
+			# Delete working-tree file
+			rm -f "$full_path" 2>/dev/null || true
 
-				# Delete LFS cache object (if we have its OID)
-				delete_lfs_cache_object "$f"
-
-				# Mark as missing so it will be re-downloaded
-				missing_list+=("$f")
-				continue
-			fi
+			# Mark as missing so it will be re-downloaded
+			missing_list+=("$f")
+			continue
 		fi
-		# For non-LFS configs (no EXPECTED_SIZE), existence is enough.
 	done
+}
+
+# Helper: delete LFS cache objects for files on missing list (if we have its OID)
+delete_lfs_cache_objects() {
+	for f in "${missing_list[@]}"; do
+
+	local oid="${EXPECTED_OID["$f"]}"
+
+	[ -n "$oid" ] || continue
+
+	# OID is pure hex; first 2 + next 2 form subdirs
+	local short1 short2 obj_path
+	short1="${oid:0:2}"
+	short2="${oid:2:2}"
+	obj_path="$REPO_DIR/.git/lfs/objects/$short1/$short2/$oid"
+
+	rm -f "$obj_path" 2>/dev/null || true
 }
 
 git lfs install
@@ -573,6 +569,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 
 	# 2) First check
 	find_missing_weights
+	delete_lfs_cache_objects
 	if [ ${#missing_list[@]} -eq 0 ]; then
 		echo "✅ All VideoCrafter weight files successfully verified."
 		weights_ok=1
