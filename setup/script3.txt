@@ -542,7 +542,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		for f in "${REQUIRED_GIT_FILES[@]}"; do
 			if [ ! -f "$REPO_DIR/$f" ]; then
 				rm -rf "$REPO_DIR" 2>/dev/null || true
-				echo "❌ Failed to clone VideoCrafter weights repo after 3 attempts."
+				echo "⚠️ Missing GIT file detected: $f"
 				if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
 					echo "❌ Setup aborted — VideoCrafter is NOT operational."
 					exit 1
