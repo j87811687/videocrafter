@@ -583,8 +583,16 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 	# 3) Force re-download of missing/corrupted files
 	cd "$REPO_DIR"
 	for f in "${missing_list[@]}"; do
-		echo "🔁 Forcing re-download of LFS file: $f"
-		git lfs pull --include="$f"
+		for attempt in 1 2 3; do
+			echo "🔁 Forcing re-download of LFS file: $f attempt $attempt..."
+			if [ -n "${EXPECTED_OID[$f]}" ]; then
+				git lfs pull --include="$f" && break
+			else
+				git lfs fetch --include="$f" --force
+				git lfs checkout "$f" && break
+			fi
+			sleep 3
+		done
 	done
 	cd ..
 
@@ -608,6 +616,7 @@ done
 if [ $weights_ok -ne 1 ]; then
 	echo "❌ Missing required VideoCrafter weight files even after full retry:"
 	printf ' - %s\n' "${missing_list[@]}"
+	rm -rf "$REPO_DIR" 2>/dev/null || true
 	echo "❌ Setup aborted — VideoCrafter is NOT operational."
 	exit 1
 fi
