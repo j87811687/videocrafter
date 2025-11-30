@@ -548,7 +548,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 					exit 1
 				fi
 				clone_run=$((clone_run+1))
-				continue
+				continue 2
 			fi
 		done
 
