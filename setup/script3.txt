@@ -522,7 +522,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 			echo "⬇️ Cloning VideoCrafter repository (weights repo)..."
 
 			for attempt in 1 2 3; do
-				echo "🔁 git clone attempt $attempt..."
+				echo "🔁 git clone attempt $attempt/3..."
 				GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
 				sleep 3
 			done
@@ -562,7 +562,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 	# 1) Full LFS pull for this repo
 	cd "$REPO_DIR"
 	for attempt in 1 2 3; do
-		echo "🔁 git lfs pull attempt $attempt..."
+		echo "🔁 git lfs pull attempt $attempt/3..."
 		git lfs pull && break
 		sleep 3
 	done
@@ -584,7 +584,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 	cd "$REPO_DIR"
 	for f in "${missing_list[@]}"; do
 		for attempt in 1 2 3; do
-			echo "🔁 Forcing re-download of LFS file: $f attempt $attempt..."
+			echo "🔁 Forcing re-download of LFS file: $f, attempt $attempt/3..."
 			if [ -n "${EXPECTED_OID[$f]}" ]; then
 				git lfs pull --include="$f" && break
 			else
@@ -604,7 +604,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		break  # Exit the outer run loop
 	fi
 
-	echo "⚠️ Missing files persist after targeted re-download in run $run."
+	echo "⚠️ Missing files persist after targeted re-download in run $run/$MAX_WEIGHT_RUNS."
 	echo "   Removing weights repo and preparing for a fresh attempt..."
 
 	# Delete entire repo so next run re-clones fresh
