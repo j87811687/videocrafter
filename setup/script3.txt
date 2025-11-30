@@ -487,17 +487,18 @@ find_missing_weights() {
 delete_lfs_cache_objects() {
 	for f in "${missing_list[@]}"; do
 
-	local oid="${EXPECTED_OID["$f"]}"
+		local oid="${EXPECTED_OID["$f"]}"
 
-	[ -n "$oid" ] || continue
+		[ -n "$oid" ] || continue
 
-	# OID is pure hex; first 2 + next 2 form subdirs
-	local short1 short2 obj_path
-	short1="${oid:0:2}"
-	short2="${oid:2:2}"
-	obj_path="$REPO_DIR/.git/lfs/objects/$short1/$short2/$oid"
+		# OID is pure hex; first 2 + next 2 form subdirs
+		local short1 short2 obj_path
+		short1="${oid:0:2}"
+		short2="${oid:2:2}"
+		obj_path="$REPO_DIR/.git/lfs/objects/$short1/$short2/$oid"
 
-	rm -f "$obj_path" 2>/dev/null || true
+		rm -f "$obj_path" 2>/dev/null || true
+	done
 }
 
 git lfs install
