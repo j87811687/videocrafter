@@ -552,6 +552,8 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 			fi
 		done
 
+# CLONE SUCCESSFUL, 2 GIT FILES EXIST
+
 		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes
 		EXPECTED_SIZE=()
 		EXPECTED_OID=()
