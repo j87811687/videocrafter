@@ -409,6 +409,16 @@ load_pointer_metadata() {
 	# Extract expected size + oid from working-tree pointer files ($REPO_DIR/$f),
 	# called only after a fresh clone and BEFORE the first git lfs pull.
 	for f in "${REQUIRED_LFS_TRACKED_FILES[@]}"; do
+
+		if [ "${STORED_SIZE[$f]:-0}" -ne 0 ]; then
+			EXPECTED_SIZE["$f"]="${STORED_SIZE[$f]}"
+			Valid_size_files=$((valid_size_files+1))
+			if [ -n "${STORED_OID[$f]:-}" ]; then
+				EXPECTED_OID["$f"]="${STORED_OID[$f]}"
+			fi
+			Continue
+		fi
+
 		local pointer_path="$REPO_DIR/$f"
 
 		if [ ! -f "$pointer_path" ]; then
@@ -431,6 +441,8 @@ load_pointer_metadata() {
 
 		if [ -n "$size_val" ]; then
 			EXPECTED_SIZE["$f"]="$size_val"
+			echo "STORED_SIZE[$f]=${EXPECTED_SIZE[$f]}" > "$STATE_FILE"
+			Valid_size_files=$((valid_size_files+1))
 		else
 			echo "❌ Failed to proper clone repo - no size in pointer file."
 			rm -rf "$REPO_DIR" 2>/dev/null || true
@@ -443,6 +455,7 @@ load_pointer_metadata() {
 		fi
 		if [ -n "$oid_val" ]; then
 			EXPECTED_OID["$f"]="$oid_val"
+			echo "STORED_OID[$f]=${EXPECTED_OID[$f]}" > "$STATE_FILE"
 		fi
 	done
 }
@@ -487,7 +500,7 @@ find_missing_weights() {
 delete_lfs_cache_objects() {
 	for f in "${missing_list[@]}"; do
 
-		local oid="${EXPECTED_OID["$f"]}"
+		local oid="${EXPECTED_OID[$f]}"
 
 		[ -n "$oid" ] || continue
 
@@ -557,9 +570,15 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes
 		EXPECTED_SIZE=()
 		EXPECTED_OID=()
+		valid_size_files=0
 		load_pointer_metadata
-		
+
+		If valid_size_files=2
+			break
+		fi
 	done
+
+# size extraction successful, 2 expected_size values exist
 
 	# 1) Full LFS pull for this repo
 	cd "$REPO_DIR"
