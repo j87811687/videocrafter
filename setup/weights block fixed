@@ -32,7 +32,7 @@ load_pointer_metadata() {
 			if [ -n "${STORED_OID[$f]:-}" ]; then
 				EXPECTED_OID["$f"]="${STORED_OID[$f]}"
 			fi
-			Continue
+			continue
 		fi
 
 		local pointer_path="$REPO_DIR/$f"
@@ -189,7 +189,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		valid_size_files=0
 		load_pointer_metadata
 
-		if valid_size_files=2
+		if [ "$valid_size_files" -eq 2 ]
 			break
 		fi
 	done
