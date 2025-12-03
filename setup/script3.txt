@@ -573,7 +573,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		valid_size_files=0
 		load_pointer_metadata
 
-		If valid_size_files=2
+		if valid_size_files=2
 			break
 		fi
 	done
