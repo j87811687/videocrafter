@@ -47,6 +47,7 @@ load_pointer_metadata() {
 			clone_run=$((clone_run+1))
 			break
 		fi
+		valid_size_files=$((valid_size_files+1))
 	done
 }
 
