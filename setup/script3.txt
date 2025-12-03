@@ -412,7 +412,7 @@ load_pointer_metadata() {
 
 		if [ "${STORED_SIZE[$f]:-0}" -ne 0 ]; then
 			EXPECTED_SIZE["$f"]="${STORED_SIZE[$f]}"
-			Valid_size_files=$((valid_size_files+1))
+			valid_size_files=$((valid_size_files+1))
 			if [ -n "${STORED_OID[$f]:-}" ]; then
 				EXPECTED_OID["$f"]="${STORED_OID[$f]}"
 			fi
@@ -442,7 +442,7 @@ load_pointer_metadata() {
 		if [ -n "$size_val" ]; then
 			EXPECTED_SIZE["$f"]="$size_val"
 			echo "STORED_SIZE[$f]=${EXPECTED_SIZE[$f]}" > "$STATE_FILE"
-			Valid_size_files=$((valid_size_files+1))
+			valid_size_files=$((valid_size_files+1))
 		else
 			echo "❌ Failed to proper clone repo - no size in pointer file."
 			rm -rf "$REPO_DIR" 2>/dev/null || true
@@ -573,7 +573,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		valid_size_files=0
 		load_pointer_metadata
 
-		if [ "$valid_size_files" -eq 2 ]
+		if [ "$valid_size_files" -eq 2 ]; then
 			break
 		fi
 	done
