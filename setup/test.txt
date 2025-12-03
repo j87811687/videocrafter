@@ -114,4 +114,4 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 			break
 		fi
 	done
-
+done
