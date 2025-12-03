@@ -435,7 +435,7 @@ load_pointer_metadata() {
 				exit 1
 			fi
 			clone_run=$((clone_run+1))
-			break
+			continue 2
 		fi
 
 		local size_line oid_line size_val oid_val
