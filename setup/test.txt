@@ -1,0 +1,117 @@
+# -------------------- Download & Verify VideoCrafter Weights --------------------
+mkdir -p checkpoints
+cd checkpoints
+
+REPO_URL="https://huggingface.co/VideoCrafter/VideoCrafter"
+REPO_DIR="VideoCrafter"
+
+# Minimal VC1 inference subset (I2V + T2V) - git files
+REQUIRED_GIT_FILES=(
+	"configs/inference/i2v_videocrafter.yaml"
+	"configs/inference/t2v_videocrafter.yaml"
+)
+
+#  Minimal VC1 inference subset (I2V + T2V) - lfs tracked files, relevant for size comparison
+REQUIRED_LFS_TRACKED_FILES=(
+	"models/i2v/model.ckpt"
+	"models/t2v/model.ckpt"
+)
+
+# Expected sizes and OIDs derived from pointer files (after clone, before first git lfs pull)
+declare -A EXPECTED_SIZE
+declare -A EXPECTED_OID
+
+load_pointer_metadata() {
+	# Extract expected size + oid from working-tree pointer files ($REPO_DIR/$f),
+	# called only after a fresh clone and BEFORE the first git lfs pull.
+	for f in "${REQUIRED_LFS_TRACKED_FILES[@]}"; do
+
+		if [ "${STORED_SIZE[$f]:-0}" -ne 0 ]; then
+			EXPECTED_SIZE["$f"]="${STORED_SIZE[$f]}"
+			valid_size_files=$((valid_size_files+1))
+			if [ -n "${STORED_OID[$f]:-}" ]; then
+				EXPECTED_OID["$f"]="${STORED_OID[$f]}"
+			fi
+			continue
+		fi
+
+		local pointer_path="$REPO_DIR/$f"
+
+		if [ ! -f "$pointer_path" ]; then
+			echo "❌ Failed to proper clone repo - missing pointer file."
+			rm -rf "$REPO_DIR" 2>/dev/null || true
+			if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
+				echo "❌ Setup aborted — VideoCrafter is NOT operational."
+				exit 1
+			fi
+			clone_run=$((clone_run+1))
+			break
+		fi
+	done
+}
+
+
+git lfs install
+
+MAX_WEIGHT_RUNS=2
+weights_ok=0
+run=1
+
+while [ $run -le $MAX_WEIGHT_RUNS ]; do
+	echo "=== VideoCrafter weights sync run $run/$MAX_WEIGHT_RUNS ==="
+
+	MAX_CLONE_RUNS=3
+	clone_run=1
+
+	while [ $clone_run -le $MAX_CLONE_RUNS ]; do
+		echo "=== VideoCrafter repo clone run $clone_run/$MAX_CLONE_RUNS ==="
+
+		# If repo missing or invalid, start from a clean slate
+		if [ ! -d "$REPO_DIR/.git" ]; then
+			rm -rf "$REPO_DIR" 2>/dev/null || true
+			echo "⬇️ Cloning VideoCrafter repository (weights repo)..."
+
+			for attempt in 1 2 3; do
+				echo "🔁 git clone attempt $attempt/3..."
+				GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
+				sleep 3
+			done
+
+			if [ ! -d "$REPO_DIR/.git" ]; then
+				echo "❌ Failed to clone VideoCrafter weights repo after 3 attempts."
+				if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
+					echo "❌ Setup aborted — VideoCrafter is NOT operational."
+					exit 1
+				fi
+				clone_run=$((clone_run+1))
+				continue
+			fi
+		fi
+
+		# Check for existence of git files
+		for f in "${REQUIRED_GIT_FILES[@]}"; do
+			if [ ! -f "$REPO_DIR/$f" ]; then
+				rm -rf "$REPO_DIR" 2>/dev/null || true
+				echo "⚠️ Missing GIT file detected: $f"
+				if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
+					echo "❌ Setup aborted — VideoCrafter is NOT operational."
+					exit 1
+				fi
+				clone_run=$((clone_run+1))
+				continue 2
+			fi
+		done
+
+# CLONE SUCCESSFUL, 2 GIT FILES EXIST
+
+		# After successful clone and BEFORE the first git lfs pull, extract pointer sizes
+		EXPECTED_SIZE=()
+		EXPECTED_OID=()
+		valid_size_files=0
+		load_pointer_metadata
+
+		if [ "$valid_size_files" -eq 2 ]; then
+			break
+		fi
+	done
+
