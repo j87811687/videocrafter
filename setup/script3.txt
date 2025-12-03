@@ -320,8 +320,14 @@ if [ ! -d "VideoCrafter" ]; then
 
         echo "✅ Repository integrity verified."
         clone_successful=1
-		echo "clone_successful=1" > "$STATE_FILE"
-        break
+		# If the key exists → replace the whole line
+		if grep -q '^clone_successful=' "$STATE_FILE"; then
+			sed -i 's/^clone_successful=.*/clone_successful=1/' "$STATE_FILE"
+		else
+			# If missing → append
+			echo "clone_successful=1" >> "$STATE_FILE"
+		fi
+		break
 	done
 
 	if [ $clone_successful -ne 1 ]; then
@@ -441,7 +447,16 @@ load_pointer_metadata() {
 
 		if [ -n "$size_val" ]; then
 			EXPECTED_SIZE["$f"]="$size_val"
-			echo "STORED_SIZE[$f]=${EXPECTED_SIZE[$f]}" > "$STATE_FILE"
+			
+			key="$f"
+			val="${EXPECTED_SIZE[$key]}"
+			# If the key exists → replace the whole line
+			if grep -q "^STORED_SIZE\[$key\]=" "$STATE_FILE"; then
+				sed -i "s/^STORED_SIZE\[$key\]=.*/STORED_SIZE[$key]=$val/" "$STATE_FILE"
+			else
+				# If missing → append
+				echo "STORED_SIZE[$f]=${EXPECTED_SIZE[$f]}" >> "$STATE_FILE"
+			fi
 			valid_size_files=$((valid_size_files+1))
 		else
 			echo "❌ Failed to proper clone repo - no size in pointer file."
@@ -455,7 +470,16 @@ load_pointer_metadata() {
 		fi
 		if [ -n "$oid_val" ]; then
 			EXPECTED_OID["$f"]="$oid_val"
-			echo "STORED_OID[$f]=${EXPECTED_OID[$f]}" > "$STATE_FILE"
+
+			key="$f"
+			val="${EXPECTED_OID[$key]}"
+			# If the key exists → replace the whole line
+			if grep -q "^STORED_OID\[$key\]=" "$STATE_FILE"; then
+				sed -i "s/^STORED_OID\[$key\]=.*/STORED_OID[$key]=$val/" "$STATE_FILE"
+			else
+				# If missing → append
+				echo "STORED_OID[$f]=${EXPECTED_OID[$f]}" >> "$STATE_FILE"
+			fi
 		fi
 	done
 }
@@ -728,7 +752,13 @@ if [ "${TEST_PORT_MAPPING_DONE:-false}" != "true" ]; then
 	sleep 60
 	kill $SERVER_PID >/dev/null 2>&1
 	echo "🛑 Test web server stopped."
-	echo "TEST_PORT_MAPPING_DONE=true" > "$STATE_FILE"
+	# If the key exists → replace the whole line
+	if grep -q '^TEST_PORT_MAPPING_DONE=' "$STATE_FILE"; then
+		sed -i 's/^TEST_PORT_MAPPING_DONE=.*/TEST_PORT_MAPPING_DONE=true/' "$STATE_FILE"
+	else
+		# If missing → append
+		echo "TEST_PORT_MAPPING_DONE=true" >> "$STATE_FILE"
+	fi
 fi
 
 echo ""
