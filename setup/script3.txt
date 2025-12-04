@@ -158,7 +158,7 @@ fi
 FREEZE_OUTPUT="/root/requirements_inference_derived.txt"
 
 if [ ! -f "$FREEZE_OUTPUT" ]; then
-	echo "=== Checking PyTorch CUDA build==="
+	echo "=== Checking PyTorch CUDA build ==="
 
 	# If torch is not installed, install
 	if ! python -c "import torch" &>/dev/null; then
