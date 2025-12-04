@@ -411,6 +411,15 @@ REQUIRED_LFS_TRACKED_FILES=(
 declare -A EXPECTED_SIZE
 declare -A EXPECTED_OID
 
+# Declare arrays fresh (they will be repopulated by sourcing)
+declare -A STORED_SIZE
+declare -A STORED_OID
+
+# If state file exists, restore stored values into arrays and variables
+if [ -f "$STATE_FILE" ]; then
+	. "$STATE_FILE"
+fi
+
 load_pointer_metadata() {
 	# Extract expected size + oid from working-tree pointer files ($REPO_DIR/$f),
 	# called only after a fresh clone and BEFORE the first git lfs pull.
