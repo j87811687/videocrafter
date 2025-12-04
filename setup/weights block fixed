@@ -1,4 +1,4 @@
-# -------------------- Download & Verify VideoCrafter Weights --------------------
+# -------------------- Download & Verify VideoCrafter Weights for declaration --------------------
 mkdir -p checkpoints
 cd checkpoints
 
@@ -26,9 +26,9 @@ load_pointer_metadata() {
 	# called only after a fresh clone and BEFORE the first git lfs pull.
 	for f in "${REQUIRED_LFS_TRACKED_FILES[@]}"; do
 
-		if [ "${STORED_SIZE[$f]:-0}" -ne 0 ]; then
+		if [ -n "${STORED_SIZE[$f]:-}" ]; then
 			EXPECTED_SIZE["$f"]="${STORED_SIZE[$f]}"
-			Valid_size_files=$((valid_size_files+1))
+			valid_size_files=$((valid_size_files+1))
 			if [ -n "${STORED_OID[$f]:-}" ]; then
 				EXPECTED_OID["$f"]="${STORED_OID[$f]}"
 			fi
@@ -45,7 +45,7 @@ load_pointer_metadata() {
 				exit 1
 			fi
 			clone_run=$((clone_run+1))
-			break
+			continue 2
 		fi
 
 		local size_line oid_line size_val oid_val
@@ -57,8 +57,17 @@ load_pointer_metadata() {
 
 		if [ -n "$size_val" ]; then
 			EXPECTED_SIZE["$f"]="$size_val"
-			echo "STORED_SIZE[$f]=${EXPECTED_SIZE[$f]}" > "$STATE_FILE"
-			Valid_size_files=$((valid_size_files+1))
+			
+			key="$f"
+			val="${EXPECTED_SIZE[$key]}"
+			# If the key exists → replace the whole line
+			if grep -q "^STORED_SIZE\[$key\]=" "$STATE_FILE"; then
+				sed -i "s/^STORED_SIZE\[$key\]=.*/STORED_SIZE[$key]=$val/" "$STATE_FILE"
+			else
+				# If missing → append
+				echo "STORED_SIZE[$f]=${EXPECTED_SIZE[$f]}" >> "$STATE_FILE"
+			fi
+			valid_size_files=$((valid_size_files+1))
 		else
 			echo "❌ Failed to proper clone repo - no size in pointer file."
 			rm -rf "$REPO_DIR" 2>/dev/null || true
@@ -67,11 +76,20 @@ load_pointer_metadata() {
 				exit 1
 			fi
 			clone_run=$((clone_run+1))
-			break
+			continue 2
 		fi
 		if [ -n "$oid_val" ]; then
 			EXPECTED_OID["$f"]="$oid_val"
-			echo "STORED_OID[$f]=${EXPECTED_OID[$f]}" > "$STATE_FILE"
+
+			key="$f"
+			val="${EXPECTED_OID[$key]}"
+			# If the key exists → replace the whole line
+			if grep -q "^STORED_OID\[$key\]=" "$STATE_FILE"; then
+				sed -i "s/^STORED_OID\[$key\]=.*/STORED_OID[$key]=$val/" "$STATE_FILE"
+			else
+				# If missing → append
+				echo "STORED_OID[$f]=${EXPECTED_OID[$f]}" >> "$STATE_FILE"
+			fi
 		fi
 	done
 }
@@ -189,7 +207,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		valid_size_files=0
 		load_pointer_metadata
 
-		if [ "$valid_size_files" -eq 2 ]
+		if [ "$valid_size_files" -eq 2 ]; then
 			break
 		fi
 	done
