@@ -1,0 +1,31 @@
+env >> /etc/environment
+mkdir -p ${DATA_DIRECTORY:-/workspace}
+
+#!/bin/bash
+set -e
+
+# -------------------- Logging --------------------
+LOG_DIR="/root/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/onstart_$(date +%s).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "=== On-Start Script: Downloading setup script ==="
+
+# -------------------- Download your setup script --------------------
+RAW_URL="<RAW_GITHUB_URL>"
+
+DEST="/root/setup_videocrafter.sh"
+
+# Quiet, fail-safe download
+curl -fsSL "$RAW_URL" -o "$DEST"
+
+chmod +x "$DEST"
+
+echo "=== Running setup script ==="
+
+# -------------------- Execute your script --------------------
+bash "$DEST"
+grep -qxF "conda activate videocrafter" ~/.bashrc || echo "conda activate videocrafter" >> ~/.bashrc 
+
+echo "=== On-Start Script Finished Successfully ==="
