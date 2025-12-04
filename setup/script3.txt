@@ -416,7 +416,7 @@ load_pointer_metadata() {
 	# called only after a fresh clone and BEFORE the first git lfs pull.
 	for f in "${REQUIRED_LFS_TRACKED_FILES[@]}"; do
 
-		if [ "${STORED_SIZE[$f]:-0}" -ne 0 ]; then
+		if [ -n "${STORED_SIZE[$f]:-}" ]; then
 			EXPECTED_SIZE["$f"]="${STORED_SIZE[$f]}"
 			valid_size_files=$((valid_size_files+1))
 			if [ -n "${STORED_OID[$f]:-}" ]; then
