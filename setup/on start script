@@ -18,6 +18,12 @@ RAW_URL="<RAW_GITHUB_URL>"
 DEST="/root/setup_videocrafter.sh"
 
 # Quiet, fail-safe download
+#			for attempt in 1 2 3; do
+#				echo "🔁 git clone attempt $attempt/3..."
+#				GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
+#				sleep 3
+#			done
+
 curl -fsSL "$RAW_URL" -o "$DEST"
 
 chmod +x "$DEST"
