@@ -712,18 +712,17 @@ python scripts/run_i2v.py \
 
 if [ ! -f "test_results/output.mp4" ]; then
     echo "⚠️ Continuation clip missing — check test_results/test_run.log"
-    exit 1
-fi
-
-printf "file '../examples/clip1.mp4'\nfile 'output.mp4'\n" > test_results/concat_list.txt
-cd test_results
-ffmpeg -f concat -safe 0 -i concat_list.txt -c copy final_continuation.mp4 -y
-cd ..
-
-if [ -f "test_results/final_continuation.mp4" ]; then
-    echo "✅ Final continuation video created: test_results/final_continuation.mp4"
-else
-    echo "⚠️ Failed to build final continuation video."
+else    
+	printf "file '../examples/clip1.mp4'\nfile 'output.mp4'\n" > test_results/concat_list.txt
+	cd test_results
+	ffmpeg -f concat -safe 0 -i concat_list.txt -c copy final_continuation.mp4 -y
+	cd ..
+	
+	if [ -f "test_results/final_continuation.mp4" ]; then
+	    echo "✅ Final continuation video created: test_results/final_continuation.mp4"
+	else
+	    echo "⚠️ Failed to build final continuation video."
+	fi
 fi
 
 # -------------------- Port Mapping Test --------------------
