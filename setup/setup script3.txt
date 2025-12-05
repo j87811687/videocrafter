@@ -109,14 +109,31 @@ fi
 conda activate videocrafter
 
 # -------------------- GPU's Compute Capability Detection --------------------
-echo "🔍 Checking existing GPU and software environment..."
-if command -v nvidia-smi &> /dev/null; then
-    COMPUTE_CAP=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n 1)
-	COMPUTE_CAP=$(echo "$COMPUTE_CAP" | sed -E 's/[^0-9\.]//g')
-	[ -z "$COMPUTE_CAP" ] && COMPUTE_CAP="0.0"
-    echo "🧠 Detected GPU's Compute Capability: $COMPUTE_CAP"
+STATE_FILE="/root/.videocrafter_state"
+[ -f "$STATE_FILE" ] && source "$STATE_FILE"
+
+# If state_file already provided a compute cap, skip detection
+if [ -n "${COMPUTE_CAP:-}" ]; then
+    echo "🧠 Using cached compute capability: $COMPUTE_CAP"
 else
-    fail "No NVIDIA GPU detected!"
+	echo "🔍 Checking existing GPU and software environment..."
+	if command -v nvidia-smi &> /dev/null; then
+	    COMPUTE_CAP=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -n 1)
+		COMPUTE_CAP=$(echo "$COMPUTE_CAP" | sed -E 's/[^0-9\.]//g')
+		if [ -z "$COMPUTE_CAP" ]; then
+			COMPUTE_CAP="0.0"
+		else
+			# Update or append COMPUTE_CAP in STATE_FILE
+			if grep -q '^COMPUTE_CAP=' "$STATE_FILE" 2>/dev/null; then
+				sed -i "s/^COMPUTE_CAP=.*/COMPUTE_CAP=\"$COMPUTE_CAP\"/" "$STATE_FILE"
+			else
+				echo "COMPUTE_CAP=\"$COMPUTE_CAP\"" >> "$STATE_FILE"
+			fi
+		fi
+	    echo "🧠 Detected GPU's Compute Capability: $COMPUTE_CAP"
+	else
+	    fail "No NVIDIA GPU detected!"
+	fi
 fi
 
 # -------------------- CUDA/PyTorch Selection --------------------
@@ -210,9 +227,6 @@ else
 fi
 
 # -------------------- VideoCrafter Setup --------------------
-STATE_FILE="/root/.videocrafter_state"
-[ -f "$STATE_FILE" ] && source "$STATE_FILE"
-
 ([ ! -d "VideoCrafter/.git" ] || [ "${clone_successful:-0}" -eq 0 ]) && rm -rf VideoCrafter 2>/dev/null
 if [ ! -d "VideoCrafter" ]; then
 	echo "=== 📁 Cloning VideoCrafter (commit dab0535) with strict verification ==="
