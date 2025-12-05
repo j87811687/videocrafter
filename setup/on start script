@@ -10,21 +10,63 @@ mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/onstart_$(date +%s).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-echo "=== On-Start Script: Downloading setup script ==="
+echo "=== On-Start Script: Downloading setup script and whitelist ==="
 
-# -------------------- Download your setup script --------------------
+
+# -------------------- Download whitelist with 3-try loop --------------------
+WHITELIST_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/inference_whitelist.txt"
+WHITELIST_PATH="/root/inference_whitelist.txt"
+
+echo "=== Downloading whitelist file (up to 3 attempts) ==="
+
+wh_ok=0
+for attempt in 1 2 3; do
+    echo "Whitelist download attempt $attempt..."
+    if curl -fsSL "$WHITELIST_URL" -o "$WHITELIST_PATH"; then
+        echo "Whitelist download succeeded."
+        wh_ok=1
+        break
+    else
+        echo "Whitelist download failed."
+        sleep 2
+    fi
+done
+
+if [ $wh_ok -ne 1 ]; then
+    echo "⚠️ All whitelist download attempts failed — continuing anyway."
+fi
+
+
+
+# -------------------- Download setup script with 3-try loop --------------------
 RAW_URL="<RAW_GITHUB_URL>"
-
 DEST="/root/setup_videocrafter.sh"
 
-# Quiet, fail-safe download
-#			for attempt in 1 2 3; do
-#				echo "🔁 git clone attempt $attempt/3..."
-#				GIT_LFS_SKIP_SMUDGE=1 git clone "$REPO_URL" "$REPO_DIR" && break
-#				sleep 3
-#			done
+echo "=== Downloading setup script (up to 3 attempts) ==="
 
-curl -fsSL "$RAW_URL" -o "$DEST"
+setup_ok=0
+for attempt in 1 2 3; do
+    echo "Setup download attempt $attempt..."
+    if curl -fsSL "$RAW_URL" -o "$DEST"; then
+        echo "Setup script download succeeded."
+        setup_ok=1
+        break
+    else
+        echo "Setup script download failed."
+        sleep 2
+    fi
+done
+
+# After 3 failures: check if local file exists
+if [ $setup_ok -ne 1 ]; then
+    if [ -f "$DEST" ]; then
+        echo "⚠️ Setup download failed 3 times, but local file exists — proceeding with execution."
+    else
+        echo "❌ Setup script download failed 3 times, and no local file exists."
+        echo "❌ Cannot continue. Exiting."
+        exit 1
+    fi
+fi
 
 chmod +x "$DEST"
 
