@@ -201,8 +201,8 @@ if command -v ffmpeg &>/dev/null && ffmpeg -version | grep -qi "NVIDIA"; then
 else
     echo "⚠️ Installing NVIDIA FFmpeg (with full NVENC/NVDEC)..."
     cd /tmp
-    wget -q https://developer.download.nvidia.com/assets/ffmpeg/ffmpeg-nvidia-latest-linux64.tar.gz
-    tar -xzf ffmpeg-nvidia-latest-linux64.tar.gz
+    wget -q https://developer.download.nvidia.com/assets/ffmpeg/ffmpeg-nvidia-6.0-linux64.tar.gz
+    tar -xzf ffmpeg-nvidia-6.0-linux64.tar.gz
     mv ffmpeg-nvidia /usr/local/bin/ffmpeg
     mv ffprobe-nvidia /usr/local/bin/ffprobe
     chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
