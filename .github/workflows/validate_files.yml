@@ -34,5 +34,6 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           branch: sanitized-output
+          base: main
           title: "Sanitized script output"
           body: "This PR contains .fixed versions of the validated files."
