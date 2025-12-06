@@ -19,8 +19,20 @@ jobs:
           chmod +x validator.sh
           ./validator.sh
 
-      - name: Upload sanitized files
-        uses: actions/upload-artifact@v4
+      # --- Commit sanitized .fixed files to a new branch ---
+      - name: Commit sanitized files to new branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -b sanitized-output
+          git add setup/*.fixed || true
+          git commit -m "Sanitized output (.fixed files)" || echo "No changes to commit"
+          git push --set-upstream origin sanitized-output || echo "Nothing to push"
+    
+      # --- Open PR with sanitized files ---
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
         with:
-          name: sanitized-output
-          path: setup/*.fixed
+          branch: sanitized-output
+          title: "Sanitized script output"
+          body: "This PR contains .fixed versions of the validated files."
