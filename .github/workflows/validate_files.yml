@@ -6,7 +6,8 @@ on:
       - "setup/on_start_script"
       - "setup/setup_script"
   pull_request:
-
+  workflow_dispatch:
+  
 jobs:
   validate:
     runs-on: ubuntu-latest
