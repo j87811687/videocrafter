@@ -165,7 +165,7 @@ check_missing_newline_blocks() {
 	local file="$1"
 	# Major block header pattern: lines starting with "# ----"
 	# Find headers not preceded by a blank line (ignoring very first line)
-	if python3 - "$file" << 'PYEOF'; then
+	if python3 - "$file" << 'PYEOF'
 import sys
 path = sys.argv[1]
 with open(path, "r", encoding="utf-8", errors="ignore") as f:
