@@ -45,6 +45,6 @@ jobs:
         with:
           branch: sanitized-output
           base: main
-          create-branch: false
+          path: setup
           title: "Sanitized script output"
           body: "This PR contains .fixed versions of the validated files."
