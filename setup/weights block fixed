@@ -1,4 +1,4 @@
-# -------------------- Download & Verify VideoCrafter Weights for declaration --------------------
+# -------------------- Download & Verify VideoCrafter Weights --------------------
 mkdir -p checkpoints
 cd checkpoints
 
