@@ -18,3 +18,9 @@ jobs:
         run: |
           chmod +x validator.sh
           ./validator.sh
+
+      - name: Upload sanitized files
+        uses: actions/upload-artifact@v4
+        with:
+          name: sanitized-output
+          path: setup/*.fixed
