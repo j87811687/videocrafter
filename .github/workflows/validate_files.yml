@@ -1,0 +1,19 @@
+name: Validate scripts
+
+on:
+  push:
+    paths:
+      - "setup/on_start_script"
+      - "setup/setup_script"
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run validator
+        run: |
+          chmod +x validator.sh
+          ./validator.sh
