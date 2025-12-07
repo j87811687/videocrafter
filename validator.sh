@@ -49,7 +49,8 @@ check_non_ascii_spaces() {
 
 fix_non_ascii_spaces() {
 	local in="$1" out="$2"
-	perl -CS -pe 's/\x{00A0}/ /g; s/\x{2007}/ /g; s/\x{202F}/ /g;' "$in" > "$out"
+	# Replace NBSP, figure space, narrow no-break (byte-level)
+	perl -pe 's/\xC2\xA0/ /g; s/\xE2\x80\x87/ /g; s/\xE2\x80\xAF/ /g;' "$in" > "$out"
 }
 
 check_non_ascii_punct() {
@@ -64,14 +65,15 @@ check_non_ascii_punct() {
 
 fix_non_ascii_punct() {
 	local in="$1" out="$2"
-	perl -CS -pe '
-		s/\x{201C}/"/g;  # “
-		s/\x{201D}/"/g;  # ”
-		s/\x{2018}/'\''/g; # ‘
-		s/\x{2019}/'\''/g; # ’
-		s/\x{2013}/-/g;  # –
-		s/\x{2014}/-/g;  # —
-		s/\x{2026}/.../g; # …
+	# Replace Unicode punctuation by byte sequences (safe for emoji)
+	perl -pe '
+		s/\xE2\x80\x9C/"/g;     # “
+		s/\xE2\x80\x9D/"/g;     # ”
+		s/\xE2\x80\x98/'\''/g;  # ‘
+		s/\xE2\x80\x99/'\''/g;  # ’
+		s/\xE2\x80\x93/-/g;     # –
+		s/\xE2\x80\x94/-/g;     # —
+		s/\xE2\x80\xA6/.../g;   # …
 	' "$in" > "$out"
 }
 
@@ -118,12 +120,13 @@ check_hidden_bash_breakers() {
 
 fix_hidden_bash_breakers() {
 	local in="$1" out="$2"
-	perl -CS -pe '
-		s/\x{00A0}/ /g;    # NBSP -> space (redundant with non-ASCII-space fix but safe)
-		s/\x{200B}//g;     # ZWSP
-		s/\x{200C}//g;     # ZWNJ
-		s/\x{200D}//g;     # ZWJ
-		s/\x{FEFF}//g;     # BOM
+	# Remove NBSP, ZWSP, ZWNJ, ZWJ, BOM (byte-level, leaves emoji intact)
+	perl -pe '
+		s/\xC2\xA0/ /g;      # NBSP
+		s/\xE2\x80\x8B//g;   # ZWSP
+		s/\xE2\x80\x8C//g;   # ZWNJ
+		s/\xE2\x80\x8D//g;   # ZWJ
+		s/\xEF\xBB\xBF//g;   # BOM
 	' "$in" > "$out"
 }
 
