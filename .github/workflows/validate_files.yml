@@ -17,6 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Stop if sanitized-output branch already exists
+        run: |
+          if git ls-remote --heads origin sanitized-output | grep -q sanitized-output; then
+            echo "Branch 'sanitized-output' already exists — stopping workflow."
+            exit 0
+          fi
+
       - name: Run validator
         run: |
           chmod +x validator.sh
