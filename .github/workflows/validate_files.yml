@@ -2,7 +2,7 @@ name: Validate scripts
 
 permissions:
   contents: write
-#  pull-requests: write
+  pull-requests: write
 
 on:
 #  push:
