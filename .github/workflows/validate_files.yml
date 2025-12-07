@@ -39,12 +39,3 @@ jobs:
       - name: Push sanitized-output branch
         run: |
           git push --set-upstream origin sanitized-output || echo "Nothing to push"
-      
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          branch: sanitized-output
-          base: main
-          path: "setup/*.fixed"
-          title: "Sanitized script output"
-          body: "This PR contains .fixed versions of the validated files."
