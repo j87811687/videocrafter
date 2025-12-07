@@ -789,9 +789,3 @@ echo "🎉 Setup complete!"
 echo "🗒️ Full log saved at: $LOG_FILE"
 echo "Activate environment with:"
 echo "  conda activate videocrafter"
-
-
-
-
-
-
