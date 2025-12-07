@@ -242,7 +242,7 @@ if [ ! -d "VideoCrafter" ]; then
 
 	while [ $attempt -le $MAX_CLONE_ATTEMPTS ]; do
 		echo "=== Clone attempt $attempt/$MAX_CLONE_ATTEMPTS ==="
-		rm -rf VideoCrafter
+		rm -rf VideoCrafter 2>/dev/null
 	
 		# Clone repo directly at commit (detached HEAD)
 		git clone --branch "$PINNED_COMMIT" "$REPO_URL"
@@ -347,7 +347,7 @@ if [ ! -d "VideoCrafter" ]; then
 
 	if [ $clone_successful -ne 1 ]; then
 		echo "❌ Failed to obtain a complete, verified clone after $MAX_CLONE_ATTEMPTS attempts."
-		rm -rf VideoCrafter
+		rm -rf VideoCrafter 2>/dev/null
 		exit 1
 	fi
 
@@ -453,7 +453,7 @@ load_pointer_metadata() {
 
 		if [ ! -f "$pointer_path" ]; then
 			echo "❌ Failed to proper clone repo - missing pointer file."
-			rm -rf "$REPO_DIR" 2>/dev/null || true
+			rm -rf "$REPO_DIR" 2>/dev/null
 			if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
 				echo "❌ Setup aborted - VideoCrafter is NOT operational."
 				exit 1
@@ -484,7 +484,7 @@ load_pointer_metadata() {
 			valid_size_files=$((valid_size_files+1))
 		else
 			echo "❌ Failed to proper clone repo - no size in pointer file."
-			rm -rf "$REPO_DIR" 2>/dev/null || true
+			rm -rf "$REPO_DIR" 2>/dev/null
 			if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
 				echo "❌ Setup aborted - VideoCrafter is NOT operational."
 				exit 1
@@ -558,7 +558,7 @@ delete_lfs_cache_objects() {
 		short2="${oid:2:2}"
 		obj_path="$REPO_DIR/.git/lfs/objects/$short1/$short2/$oid"
 
-		rm -f "$obj_path" 2>/dev/null || true
+		rm -f "$obj_path" 2>/dev/null
 	done
 }
 
@@ -579,7 +579,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 
 		# If repo missing or invalid, start from a clean slate
 		if [ ! -d "$REPO_DIR/.git" ]; then
-			rm -rf "$REPO_DIR" 2>/dev/null || true
+			rm -rf "$REPO_DIR" 2>/dev/null
 			echo "⬇️ Cloning VideoCrafter repository (weights repo)..."
 
 			for attempt in 1 2 3; do
@@ -602,7 +602,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 		# Check for existence of git files
 		for f in "${REQUIRED_GIT_FILES[@]}"; do
 			if [ ! -f "$REPO_DIR/$f" ]; then
-				rm -rf "$REPO_DIR" 2>/dev/null || true
+				rm -rf "$REPO_DIR" 2>/dev/null
 				echo "⚠️ Missing GIT file detected: $f"
 				if [ $clone_run -eq $MAX_CLONE_RUNS ]; then
 					echo "❌ Setup aborted - VideoCrafter is NOT operational."
@@ -677,7 +677,7 @@ while [ $run -le $MAX_WEIGHT_RUNS ]; do
 	echo "   Removing weights repo and preparing for a fresh attempt..."
 
 	# Delete entire repo so next run re-clones fresh
-	rm -rf "$REPO_DIR" 2>/dev/null || true
+	rm -rf "$REPO_DIR" 2>/dev/null
 
 	run=$((run+1))
 done
@@ -685,7 +685,7 @@ done
 if [ $weights_ok -ne 1 ]; then
 	echo "❌ Missing required VideoCrafter weight files even after full retry:"
 	printf ' - %s\n' "${missing_list[@]}"
-	rm -rf "$REPO_DIR" 2>/dev/null || true
+	rm -rf "$REPO_DIR" 2>/dev/null
 	echo "❌ Setup aborted - VideoCrafter is NOT operational."
 	exit 1
 fi
@@ -708,10 +708,10 @@ fi
 echo "🎬 Running continuation test (last frame → I2V + concat) using example clip..."
 mkdir -p test_results
 
-rm -f test_results/output.mp4
-rm -f test_results/final_continuation.mp4
-rm -f test_results/test_run.log
-rm -f test_results/last_frame.png
+rm -f test_results/output.mp4 2>/dev/null
+rm -f test_results/final_continuation.mp4 2>/dev/null
+rm -f test_results/test_run.log 2>/dev/null
+rm -f test_results/last_frame.png 2>/dev/null
 
 ffmpeg -sseof -1 -i examples/clip1.mp4 -vf "scale=512:-1" \
 	test_results/last_frame.png -y
