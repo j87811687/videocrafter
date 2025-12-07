@@ -1,11 +1,14 @@
 name: Validate scripts
 
+permissions:
+  contents: write
+
 on:
-  push:
-    paths:
-      - "setup/on_start_script"
-      - "setup/setup_script"
-  pull_request:
+#  push:
+#    paths:
+#      - "setup/on_start_script"
+#      - "setup/setup_script"
+#  pull_request:
   workflow_dispatch:
   
 jobs:
