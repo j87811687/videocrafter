@@ -1,6 +1,4 @@
 torch
-torchvision
-torchaudio
 
 diffusers
 transformers
@@ -9,13 +7,10 @@ safetensors
 
 numpy
 Pillow
-opencv-python
 
 requests
 tqdm
-regex
 filelock
 packaging
 PyYAML
-protobuf
 typing-extensions
