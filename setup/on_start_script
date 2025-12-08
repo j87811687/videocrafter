@@ -1,3 +1,4 @@
+#fixed chmod
 env >> /etc/environment
 mkdir -p ${DATA_DIRECTORY:-/workspace}
 
