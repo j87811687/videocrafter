@@ -68,7 +68,7 @@ if [ $setup_ok -ne 1 ]; then
 	fi
 fi
 
-chmod +x "$DEST"
+chmod +x "$DEST" 2>/dev/null || echo "⚠️ Could not set executable bit on setup script — continuing."
 
 echo "=== Running setup script ==="
 
