@@ -1,6 +1,7 @@
+#.tmp
 #env >> /etc/environment
 echo "⚠️ Skipping env dump to /etc/environment to avoid persisting secrets."
-mkdir -p ${DATA_DIRECTORY:-/workspace}
+mkdir -p "${DATA_DIRECTORY:-/workspace}"
 
 #!/bin/bash
 set -e
@@ -9,7 +10,7 @@ set -e
 LOG_DIR="/root/logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/onstart_$(date +%s).log"
-exec > >(tee -a "$LOG_FILE") 2>&1
+exec > >(tee -a "$LOG_FILE" || true) 2>&1
 
 echo "=== On-Start Script: Downloading setup script and whitelist ==="
 
@@ -23,21 +24,30 @@ echo "=== Downloading whitelist file (up to 3 attempts) ==="
 wh_ok=0
 for attempt in 1 2 3; do
 	echo "Whitelist download attempt $attempt..."
-	if curl -fsSL "$WHITELIST_URL" -o "$WHITELIST_PATH"; then
+	if curl -fsSL "$WHITELIST_URL" -o "$WHITELIST_PATH.tmp"; then
+		# Successful download → replace previous file
+		mv -f "$WHITELIST_PATH.tmp" "$WHITELIST_PATH"
 		echo "Whitelist download succeeded."
 		wh_ok=1
 		break
 	else
 		echo "Whitelist download failed."
+
+		# Remove partial file from this failed attempt
+		rm -f "$WHITELIST_PATH.tmp" 2>/dev/null || true
+
 		sleep 2
 	fi
 done
 
+# After 3 attempts → If no new download but an old valid file exists, fallback is used automatically.
 if [ $wh_ok -ne 1 ]; then
-	echo "⚠️ All whitelist download attempts failed - continuing anyway."
+	if [ -f "$WHITELIST_PATH" ]; then
+		echo "⚠️ All download attempts failed — using previously downloaded whitelist."
+	else
+		echo "⚠️ All download attempts failed and no whitelist file exists — continuing without whitelist."
+	fi
 fi
-
-
 
 # -------------------- Download setup script with 3-try loop --------------------
 RAW_URL="<RAW_GITHUB_URL>"
@@ -48,12 +58,18 @@ echo "=== Downloading setup script (up to 3 attempts) ==="
 setup_ok=0
 for attempt in 1 2 3; do
 	echo "Setup download attempt $attempt..."
-	if curl -fsSL "$RAW_URL" -o "$DEST"; then
+	if curl -fsSL "$RAW_URL" -o "$DEST.tmp"; then
+		# Successful download → replace previous file
+		mv -f "$DEST.tmp" "$DEST"
 		echo "Setup script download succeeded."
 		setup_ok=1
 		break
 	else
 		echo "Setup script download failed."
+
+		# Remove partial file created by this failed attempt
+		rm -f "$DEST.tmp" 2>/dev/null || true
+
 		sleep 2
 	fi
 done
