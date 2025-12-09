@@ -1,5 +1,5 @@
-#fixed chmod
-env >> /etc/environment
+#env >> /etc/environment
+echo "⚠️ Skipping env dump to /etc/environment to avoid persisting secrets."
 mkdir -p ${DATA_DIRECTORY:-/workspace}
 
 #!/bin/bash
