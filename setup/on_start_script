@@ -1,4 +1,4 @@
-#.tmp
+#.tmp, valid fallback setup file
 #env >> /etc/environment
 echo "⚠️ Skipping env dump to /etc/environment to avoid persisting secrets."
 mkdir -p "${DATA_DIRECTORY:-/workspace}"
@@ -76,10 +76,10 @@ done
 
 # After 3 failures: check if local file exists
 if [ $setup_ok -ne 1 ]; then
-	if [ -f "$DEST" ]; then
+	if [ -f "$DEST" ] && head -c 1 "$DEST" >/dev/null 2>&1; then
 		echo "⚠️ Setup download failed 3 times, but local file exists - proceeding with execution."
 	else
-		echo "❌ Setup script download failed 3 times, and no local file exists."
+		echo "❌ Setup script download failed 3 times, and no local valid file exists."
 		echo "❌ Cannot continue. Exiting."
 		exit 1
 	fi
