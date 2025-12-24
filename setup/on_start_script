@@ -90,7 +90,10 @@ chmod +x "$DEST" 2>/dev/null || echo "⚠️ Could not set executable bit on set
 echo "=== Running setup script ==="
 
 # -------------------- Execute your script --------------------
-bash "$DEST"
+if ! bash "$DEST"; then
+	echo "⚠️ Setup script failed — leaving instance accessible for manual recovery."
+	exit 0
+fi
 touch ~/.bashrc
 grep -qxF "conda activate videocrafter" ~/.bashrc || echo "conda activate videocrafter" >> ~/.bashrc 
 
