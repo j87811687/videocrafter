@@ -1,4 +1,4 @@
-#.tmp, valid fallback setup file
+#.tmp, valid fallback setup file, create ~/.bashrc if missing
 #env >> /etc/environment
 echo "⚠️ Skipping env dump to /etc/environment to avoid persisting secrets."
 mkdir -p "${DATA_DIRECTORY:-/workspace}"
@@ -91,6 +91,7 @@ echo "=== Running setup script ==="
 
 # -------------------- Execute your script --------------------
 bash "$DEST"
+touch ~/.bashrc
 grep -qxF "conda activate videocrafter" ~/.bashrc || echo "conda activate videocrafter" >> ~/.bashrc 
 
 echo "=== On-Start Script Finished Successfully ==="
