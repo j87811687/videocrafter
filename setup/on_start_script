@@ -15,7 +15,7 @@ exec > >(tee -a "$LOG_FILE" || true) 2>&1
 echo "=== On-Start Script: Downloading setup script and whitelist ==="
 
 
-# -------------------- Download whitelist with 3-try loop --------------------
+# -------------------- Download whitelist --------------------
 WHITELIST_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/inference_whitelist.txt"
 WHITELIST_PATH="/root/inference_whitelist.txt"
 
@@ -49,7 +49,7 @@ if [ $wh_ok -ne 1 ]; then
 	fi
 fi
 
-# -------------------- Download setup script with 3-try loop --------------------
+# -------------------- Download setup script --------------------
 RAW_URL="<RAW_GITHUB_URL>"
 DEST="/root/setup_videocrafter.sh"
 
@@ -89,7 +89,7 @@ chmod +x "$DEST" 2>/dev/null || echo "⚠️ Could not set executable bit on set
 
 echo "=== Running setup script ==="
 
-# -------------------- Execute your script --------------------
+# -------------------- Execute setup script --------------------
 if ! bash "$DEST"; then
 	echo "⚠️ Setup script failed — leaving instance accessible for manual recovery."
 	exit 0
