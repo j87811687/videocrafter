@@ -50,7 +50,7 @@ if [ $wh_ok -ne 1 ]; then
 fi
 
 # -------------------- Download setup script --------------------
-RAW_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/setup_script"
+RAW_URL="https://raw.githubusercontent.com/j87811687/videocrafter/refs/heads/main/setup/setup_script.sh"
 DEST="/root/setup_videocrafter.sh"
 
 echo "=== Downloading setup script (up to 3 attempts) ==="
